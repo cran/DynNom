@@ -42,16 +42,20 @@ Easy web applications in R. \url{http://shiny.rstudio.com}
   \code{\link{glm}}, \code{\link{predict.lm}}, \code{\link{predict.glm}}
 }
 \examples{
+\dontrun{
 # a simple linear regression model
 model1 <- lm(uptake ~ Plant + conc + Plant * conc, data = CO2)
-\donttest{DynNom(model1, CO2)}
+DynNom(model1, CO2)
 
 # a logistic regression model
 swiss$ftl <- as.numeric(swiss$Fertility > 70)
 model2 <- glm(ftl ~ Agriculture + Education + Catholic, data = swiss, family = binomial)
-\donttest{DynNom(model2, swiss, clevel = 0.9)}
+DynNom(model2, swiss, clevel = 0.9)
+}
 
+if (interactive()) {
 # a poisson regression model
 model3 <- glm(event ~ mag + station + dist + accel, data = attenu, family = poisson)
-\donttest{DynNom(model3, attenu, covariate = "numeric")}
+DynNom(model3, attenu, covariate = "numeric")
+}
 }

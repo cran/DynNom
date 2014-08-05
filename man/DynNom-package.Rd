@@ -11,7 +11,7 @@ The DynNom function makes it possible to display predicted values of an lm or gl
 \tabular{ll}{
 Package: \tab DynNom\cr
 Type: \tab Package\cr
-Version: \tab 1.0\cr
+Version: \tab 1.0.1\cr
 Date: \tab 2014-08-05\cr
 License: \tab GPL-2\cr
 }
@@ -28,16 +28,20 @@ Easy web applications in R. \url{http://shiny.rstudio.com}
 \section{Please cite as:}{Jalali, A., Alvarez-Iglesias, A., Newell, J. (2014). A Dynamic Nomogram for Linear and Generalized Linear Models as Shiny Applications. R package version 1.0.
 }
 \examples{
+\dontrun{
 # a simple linear regression model
 model1 <- lm(uptake ~ Plant + conc + Plant * conc, data = CO2)
-\donttest{DynNom(model1, CO2)}
+DynNom(model1, CO2)
 
 # a logistic regression model
 swiss$ftl <- as.numeric(swiss$Fertility > 70)
 model2 <- glm(ftl ~ Agriculture + Education + Catholic, data = swiss, family = binomial)
-\donttest{DynNom(model2, swiss, clevel = 0.9)}
+DynNom(model2, swiss, clevel = 0.9)
+}
 
+if (interactive()) {
 # a poisson regression model
 model3 <- glm(event ~ mag + station + dist + accel, data = attenu, family = poisson)
-\donttest{DynNom(model3, attenu, covariate = "numeric")}
+DynNom(model3, attenu, covariate = "numeric")
+}
 }
