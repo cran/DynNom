@@ -1,5 +1,12 @@
+importFrom("stats", "confint", "na.omit", "predict", "qnorm", "qt",
+             "quantile", "sd", "time")
+importFrom("utils", "tail")
 import(ggplot2)
 import(shiny)
 import(stargazer)
 import(compare)
+import(survival)
 export(DynNom)
+export(DynNom.lm)
+export(DynNom.glm)
+export(DynNom.coxph)

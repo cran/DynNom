@@ -1,5 +1,10 @@
-09c864c3dce4457a8a5b3931c64d2be8 *DESCRIPTION
-48d05244a6962bd92db0f685857670ef *NAMESPACE
-8f24029dd4460b4271f2dfca2a24700b *R/DynNom.R
-129f4525b89b36e4546a6fb0ea0fe351 *man/DynNom-package.Rd
-148eb019f41e690def5be0f042c552eb *man/DynNom.Rd
+a7919d8c4a2688a4dc4e8caab27fba59 *DESCRIPTION
+618e9f708a4b82b6ea3156bd7c30e148 *NAMESPACE
+d43c7d4d492bfa4bd5f650e9cf5ef73e *R/DynNom.R
+a2dc5a31575d5e448991eb0e04d2b80e *R/DynNom_coxph.R
+840ff3d6dfac479acb56971ea13f8432 *R/DynNom_glm.R
+35e30a221f39e27d5e7f606ff119aab1 *R/DynNom_lm.R
+57be996f61ebcf08d780ace99cf81f82 *man/DynNom.Rd
+80eac8ba4a723afae40d8c1de643d5a1 *man/DynNom.coxph.Rd
+e4b4aaa3b1e77e62c7ecfd3c7b8149ac *man/DynNom.glm.Rd
+8d4487684b0bda4f7b9d4fee66968614 *man/DynNom.lm.Rd
