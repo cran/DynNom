@@ -7,22 +7,37 @@ DynNom <- function(model, data,
   if (length(dim(data)) > 2)
     stop("Error in data format: dataframe format required")
 
-  if (attr(model$terms, "dataClasses")[[1]] == "logical")
-    stop("Error in model syntax: logical form for response not supported")
+  if (attr(model, "class")[1] == "lm"|
+      attr(model, "class")[1] == "glm"|
+      attr(model, "class")[1] == "coxph") {
 
-  if (tail(names(attr(model$terms,"dataClasses")),n=1)=="(weights)") {
-    n.terms <- length(attr(model$terms,"dataClasses"))
-    attr(model$terms,"dataClasses") <- attr(model$terms,"dataClasses")[1:n.terms - 1]
+    if (attr(model$terms, "dataClasses")[[1]] == "logical")
+      stop("Error in model syntax: logical form for response not supported")
+
+    if (tail(names(attr(model$terms,"dataClasses")),n=1)=="(weights)") {
+      n.terms <- length(attr(model$terms,"dataClasses"))
+      attr(model$terms,"dataClasses") <- attr(model$terms,"dataClasses")[1:n.terms - 1]
+    }
+  }
+
+  if (attr(model, "class")[1] == "ols"|
+      attr(model, "class")[1] == "Glm"|
+      attr(model, "class")[1] == "lrm") {
+    model <- update(model,x=T,y=T)
+    if(length(class(model$y))==1){
+      if (class(model$y)[1] == "logical")  stop("Error in model syntax: logical form for response not supported")} else{
+        if (class(model$y)[2] == "logical")  stop("Error in model syntax: logical form for response not supported")
+      }
   }
 
   if (attr(model, "class")[1] == "lm"|
       attr(model, "class")[1] == "glm") {
     for(i in 1:length(names(attr(model$terms, "dataClasses")))) {
-      com1=numeric(length(names(data)))
+      com1 = numeric(length(names(data)))
       for(j in 1:length(names(data))) {
-        if (names(attr(model$terms, "dataClasses"))[i]==names(data)[j]) com1[j]=1
+        if (names(attr(model$terms, "dataClasses"))[i] == names(data)[j]) com1[j] = 1
       }
-      if (sum(com1)==0)
+      if (sum(com1) == 0)
         stop("Error in model syntax: some of model's terms do not match to variables' name in dataset")
     }
   }
@@ -57,6 +72,23 @@ DynNom <- function(model, data,
     }
   }
 
+  if (attr(model, "class")[1] == "cph") {
+    model <- update(model,x=T, y=T, surv=T)
+
+    if(length(class(model$y))==1){
+      if (class(model$y)[1] == "logical")  stop("Error in model syntax: logical form for response not supported")} else{
+        if (class(model$y)[2] == "logical")  stop("Error in model syntax: logical form for response not supported")
+      }
+
+    if(dim(model$y)[2]==3)
+     stop("Error in model syntax: models with start-stop time is not supported")
+
+    if (model$call[[2]][[3]]==1) {
+      stop("Error in model syntax: the model is null")
+    }
+  }
+
+
   if (attr(model, "class")[1] == "lm") {
     DynNom.lm(model, data, clevel, covariate)
   }
@@ -70,5 +102,18 @@ DynNom <- function(model, data,
     if (attr(model$terms, "dataClasses")[[1]] == "nmatrix.2") {
       DynNom.coxph(model, data, clevel, covariate, ptype)
     }
+  }
+
+  if (attr(model, "class")[1] == "ols") {
+    DynNom.ols(model, data, clevel, covariate)
+  }
+  if (attr(model, "class")[1] == "Glm") {
+    DynNom.Glm(model, data, clevel, covariate)
+  }
+  if (attr(model, "class")[1] == "lrm") {
+    DynNom.lrm(model, data, clevel, covariate)
+  }
+  if (attr(model, "class")[1] == "cph") {
+    DynNom.cph(model, data, clevel, covariate, ptype)
   }
 }

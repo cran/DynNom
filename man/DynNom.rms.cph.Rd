@@ -1,19 +1,19 @@
-\name{DynNom.coxph}
-\alias{DynNom.coxph}
+\name{DynNom.cph}
+\alias{DynNom.cph}
 \title{
-Dynamic Nomograms for Proportional Hazards Models
+Dynamic Nomograms for Cox Proportional Hazards Models and Extensions
 }
 \description{
-\code{DynNom.coxph} displays the results of a \code{coxph} model object as a dynamic nomogram in an 'RStudio' panel or web browser.
+\code{DynNom.cph} displays the results of a \code{cph} model object from \code{rms} package as a dynamic nomogram in an 'RStudio' panel or web browser.
 }
 \usage{
-DynNom.coxph(model, data,
+DynNom.cph(model, data,
              clevel = 0.95, covariate = c("slider", "numeric"),
              ptype = c("st", "1-st"))
 }
 \arguments{
   \item{model}{
-  a coxph model object
+  a \code{cph} model object which accepts a variety of transformation functions such as \code{asis}, \code{pol}, \code{lsp}, \code{rcs}, \code{catg}, \code{scored}, \code{strat} and \code{matrx} as defined in the \code{rms} package.
 }
   \item{data}{
   dataframe containing the accompanying data
@@ -34,26 +34,26 @@ A dynamic nomogram in a shiny application which recognises all the predictors in
 The individual predictions with a relative confidence interval are calculated using the \code{predict} function, displaying graphically as either the Kaplan-Meier in the \code{Estimated S(t)} tab or the \code{Predicted Survival} tab. Table of individual predictions and model output are available in the \code{Numerical Summary} and \code{Model Summary} tabs, respectively.
 }
 \author{
-Amirhossein Jalali, Davood Roshan, Alberto Alvarez-Iglesias, John Newell
+Davood Roshan, Amirhossein Jalali, Alberto Alvarez-Iglesias, John Newell
 }
 \seealso{
-\code{\link{coxph}}, \code{\link{predict.coxph}}
+\code{\link{cph}}, \code{\link{predict.cph}}, \code{\link{rms}}
 }
 \examples{
 \dontrun{
-data.kidney <- kidney
-# always make sure that the categorical variables are in a factor class
-data.kidney$sex <- as.factor(data.kidney$sex)
-levels(data.kidney$sex) <- c("male", "female")
+# example 1
+data = veteran
+model1 <- cph((Surv(log(time), status)) ~ rcs(age, 4) * strat(trt) +
+              diagtime * strat(prior) + lsp(karno, 60), data = veteran)
+model1 <- update(model, x = T, y = T, surv = T)
+DynNom.cph(model1, data)
+DynNom(model1, data, ptype = "1-st")
 
-model1 <- coxph(Surv(time, status) ~ age + sex + disease, data.kidney)
-DynNom(model1, data.kidney)
-DynNom(model1, data.kidney, ptype = "1-st")
-
-# a cox model including a strata term
+# example 2
 data(lung)
-model2 <- coxph(Surv(time, status) ~ age + strata(sex) + ph.ecog , data = lung)
-DynNom(model2, lung)
+Surv = Surv(time, status)
+model2 <- cph(Surv ~ age + strat(sex) + ph.ecog , data = lung)
+DynNom.cph(model2, lung)
 }
 
 if (interactive()) {
@@ -63,11 +63,11 @@ levels(data.ovary$resid.ds) <- c("no", "yes")
 data.ovary$rx <- as.factor(data.ovary$rx)
 data.ovary$ecog.ps <- as.factor(data.ovary$ecog.ps)
 
-model3 <- coxph(Surv(futime, fustat) ~ age + resid.ds * rx + ecog.ps, data = data.ovary)
+model3 <- cph(Surv(futime, fustat) ~ age + resid.ds * rx + ecog.ps, data = data.ovary)
 DynNom(model3, data.ovary)
 }
 }
 \keyword{ dynamic nomograms }
-\keyword{ Cox Proportional Hazards Model }
+\keyword{ cox proportional hazards model }
 \keyword{ individual prediction }
 \keyword{ shiny }

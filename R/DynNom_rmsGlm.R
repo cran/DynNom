@@ -1,34 +1,34 @@
-if (getRversion() >= "2.15.1") utils::globalVariables(c("counter", "Prediction", "input.data", "old.d"))
+if (getRversion() >= "2.15.1") utils::globalVariables(c("counter", "Prediction", "input.data", "old.d", "vcov"))
 
-DynNom.glm <- function(model, data,
+DynNom.Glm <- function(model, data,
                        clevel = 0.95, covariate = c("slider", "numeric")) {
 
   data <- data.frame(data)
+  model <- update(model,x=T,y=T)
 
   if (length(dim(data)) > 2)
     stop("Error in data format: dataframe format required")
 
-  if (attr(model$terms, "dataClasses")[[1]] == "logical")
-    stop("Error in model syntax: logical form for response not supported")
-
-  if (tail(names(attr(model$terms,"dataClasses")), n = 1) == "(weights)") {
-    n.terms <- length(attr(model$terms,"dataClasses"))
-    attr(model$terms,"dataClasses") <- attr(model$terms,"dataClasses")[1:n.terms - 1]
-  }
-
-  for(i in 1:length(names(attr(model$terms, "dataClasses")))) {
-    com1 = numeric(length(names(data)))
-    for(j in 1:length(names(data))) {
-      if (names(attr(model$terms, "dataClasses"))[i] == names(data)[j]) com1[j] = 1
+  if(length(class(model$y))==1){
+    if (class(model$y)[1] == "logical")  stop("Error in model syntax: logical form for response not supported")} else{
+      if (class(model$y)[2] == "logical")  stop("Error in model syntax: logical form for response not supported")
     }
-    if (sum(com1) == 0)
-      stop("Error in model syntax: some of model's terms do not match to variables' name in dataset")
-  }
 
-  coll <- c(1:50)
+  vars=c()
+  for(i in 1:length(model$Design$name)){
+    if(model$Design$assume[i]!="interaction") vars[i] <- as.character(model$Design$name[i]) else vars[i]="inter"
+  }
+  
+  vars <- subset(vars,vars!="inter")
+  vars <- as.character(c(model$terms[[2]],vars))
+
+  cl.vars <-  model$Design$assume[model$Design$assume!="interaction"]
+
+  cvars <- NULL
+  cvars[1] <- class(model$y)
+  for(i in 2:length(vars))  cvars[i]=cl.vars[i-1]
+
   covariate <- match.arg(covariate)
-  linkF <- model$family$linkinv
-  mfamily <- model$family$family
   input.data <- NULL
   old.d <- NULL
 
@@ -61,8 +61,8 @@ DynNom.glm <- function(model, data,
           stopApp()
       })
 
-      limits0 <- c(mean(as.numeric(model$model[[1]])) - 3 * sd(model$model[[1]]),
-                   mean(as.numeric(model$model[[1]])) + 3 * sd(model$model[[1]]))
+      limits0 <- c(mean(as.numeric(model$y)) - 3 * sd(model$y),
+                   mean(as.numeric(model$y)) + 3 * sd(model$y))
       limits <- reactive({
         if (as.numeric(input$limits) == 1) {
           limits <- c(input$lxlim, input$uxlim)
@@ -71,25 +71,35 @@ DynNom.glm <- function(model, data,
         }
       })
 
-      neededVar <- names(attr(model$terms, "dataClasses"))
-      data <- data[, neededVar]
+      neededVar <- vars[-1]
+      data <- cbind(resp=model$y,na.omit(data[, neededVar]))
+      data <- as.data.frame(data)
+      colnames(data) <- c("resp",neededVar)
       input.data <<- data[1, ]
       input.data[1, ] <<- NA
 
       b <- 1
       i.factor <- NULL
       i.numeric <- NULL
-      for (j in 2:length(attr(model$terms, "dataClasses"))) {
+      for (j in 2:length(vars)) {
         for (i in 1:length(data)) {
-          if (names(attr(model$terms, "dataClasses"))[j] == names(data)[i]) {
-            if (attr(model$terms, "dataClasses")[[j]] == "factor" |
-                attr(model$terms, "dataClasses")[[j]] == "ordered" |
-                attr(model$terms, "dataClasses")[[j]] == "logical") {
-              i.factor <- rbind(i.factor, c(names(attr(model$terms, "dataClasses"))[j], j, i, b))
+          if (vars[j] == names(data)[i]) {
+            if (cvars[j] == "category" |
+                cvars[j] == "scored"|
+                cvars[j] == "factor"|
+                cvars[j] == "ordered") {
+              i.factor <- rbind(i.factor, c(vars[j], j, i, b))
               (break)()
             }
-            if (attr(model$terms, "dataClasses")[[j]] == "numeric") {
-              i.numeric <- rbind(i.numeric, c(names(attr(model$terms, "dataClasses"))[j], j, i))
+            if (cvars[j] == "rcspline"|
+                cvars[j] == "asis"|
+                cvars[j] == "lspline"|
+                cvars[j] == "polynomial"|
+                cvars[j] == "numeric" |
+                cvars[j] == "integer"|
+                cvars[j] == "double"|
+                cvars[j] == "matrx") {
+              i.numeric <- rbind(i.numeric, c(vars[j], j, i))
               b <- b + 1
               (break)()
             }
@@ -110,8 +120,8 @@ DynNom.glm <- function(model, data,
         output$manySliders.f <- renderUI({
           slide.bars <- list(lapply(1:nf, function(j) {
             selectInput(paste("factor", j, sep = ""),
-                        names(attr(model$terms, "dataClasses")[as.numeric(i.factor[j, 2])]),
-                        model$xlevels[[as.numeric(i.factor[j, 2]) - as.numeric(i.factor[j, 4])]], multiple = FALSE)
+                        vars[as.numeric(i.factor[j, 2])],
+                        model$Design$parms[[i.factor[j,1]]], multiple = FALSE)
           }))
           do.call(tagList, slide.bars)
         })
@@ -122,7 +132,7 @@ DynNom.glm <- function(model, data,
           if (covariate == "slider") {
             slide.bars <- list(lapply(1:nn, function(j) {
               sliderInput(paste("numeric", j, sep = ""),
-                          names(attr(model$terms, "dataClasses")[as.numeric(i.numeric[j, 2])]),
+                          vars[as.numeric(i.numeric[j, 2])],
                           min = as.integer(min(na.omit(data[, as.numeric(i.numeric[j, 3])]))),
                           max = as.integer(max(na.omit(data[, as.numeric(i.numeric[j, 3])]))) + 1,
                           value = as.integer(mean(na.omit(data[, as.numeric(i.numeric[j, 3])]))))
@@ -131,7 +141,7 @@ DynNom.glm <- function(model, data,
           if (covariate == "numeric") {
             slide.bars <- list(lapply(1:nn, function(j) {
               numericInput(paste("numeric", j, sep = ""),
-                           names(attr(model$terms, "dataClasses")[as.numeric(i.numeric[j, 2])]),
+                           vars[as.numeric(i.numeric[j, 2])],
                            value = as.integer(mean(na.omit(data[, as.numeric(i.numeric[j, 3])]))))
             }))
           }
@@ -190,24 +200,36 @@ DynNom.glm <- function(model, data,
         if (input$add > 0) {
           if (isTRUE(compare(old.d, new.d())) == FALSE) {
             OUT <- isolate({
-              pred <- predict(model, newdata = new.d(), type = "link", conf.int = clevel, se.fit = TRUE)
-              if (mfamily == "gaussian" |
-                  mfamily == "inverse.gaussian" |
-                  mfamily == "quasi") {
-                lwb <- pred$fit - (qt(1 - (1 - clevel)/2, model$df.residual) * pred$se.fit)
-                upb <- pred$fit + (qt(1 - (1 - clevel)/2, model$df.residual) * pred$se.fit)
+
+              if(is.error(try(predict(model, newdata = new.d(), se.fit = TRUE)))==T){
+                d.p <- data.frame(Prediction = NA, Lower.bound = NA,
+                                  Upper.bound = NA)
+              } else{
+              pred <- predict(model, newdata = new.d(), se.fit = TRUE)
+              if (model$family$family == "gaussian" |
+                  model$family$family == "inverse.gaussian" |
+                  model$family$family == "quasi") {
+                lwb <- pred$linear.predictors - (qt(1 - (1 - clevel)/2, model$df.residual) * pred$se.fit)
+                upb <- pred$linear.predictors + (qt(1 - (1 - clevel)/2, model$df.residual) * pred$se.fit)
               } else {
-                lwb <- pred$fit - (qnorm(1 - (1 - clevel)/2) * pred$se.fit)
-                upb <- pred$fit + (qnorm(1 - (1 - clevel)/2) * pred$se.fit)
+                lwb <- pred$linear.predictors - (qnorm(1 - (1 - clevel)/2) * pred$se.fit)
+                upb <- pred$linear.predictors + (qnorm(1 - (1 - clevel)/2) * pred$se.fit)
               }
-              lubound <- sort(c(linkF(lwb), linkF(upb)))
-              d.p <- data.frame(Prediction = linkF(pred$fit),
-                                Lower.bound = lubound[1], Upper.bound = lubound[2])
+              lubound <- sort(c(model$family$linkinv(lwb), model$family$linkinv(upb)))
+
+              if(is.infinite(round(model$family$linkinv(pred$linear.predictors),digits = 4))){
+                d.p <- data.frame(Prediction = NA, Lower.bound = NA,
+                                  Upper.bound = NA)
+              } else{
+                d.p <- data.frame(Prediction = round(model$family$linkinv(pred$linear.predictors),digits = 4),
+                                  Lower.bound = round(lubound[1],digits = 4), Upper.bound = round(lubound[2],digits = 4))
+              }
               old.d <<- new.d()
               data.p <- cbind(d.p, counter = 1)
               p1 <<- rbind(p1, data.p)
               p1$count <- seq(1, dim(p1)[1])
               p1
+            }
             })
           } else {
             p1$count <- seq(1, dim(p1)[1])
@@ -217,15 +239,19 @@ DynNom.glm <- function(model, data,
         OUT
       })
 
-      if (mfamily == "gaussian" |
-          mfamily == "inverse.gaussian" |
-          mfamily == "quasi") {
+      if (model$family$family == "gaussian" |
+          model$family$family == "inverse.gaussian" |
+          model$family$family == "quasi") {
         output$plot <- renderPlot({
           if (input$add == 0)
             return(NULL)
           OUT <- isolate({
             if (is.null(new.d()))
               return(NULL)
+
+            if (dim(na.omit(data2()))[1]==0 ) return(NULL)
+
+
             if (is.na(input$lxlim) | is.na(input$uxlim)) {
               lim <- limits0
             } else {
@@ -234,11 +260,11 @@ DynNom.glm <- function(model, data,
             yli <- c(0 - 0.5, 10 + 0.5)
             if (dim(input.data)[1] > 11)
               yli <- c(dim(input.data)[1] - 11.5, dim(input.data)[1] - 0.5)
-            p <- ggplot(data = data2(), aes(x = Prediction, y = 0:(sum(counter) - 1)))
-            p <- p + geom_point(size = 4, colour = data2()$count, shape = 15)
+            p <- ggplot(data = data2()[!is.na(data2()$Prediction),], aes(x = Prediction, y = 0:(sum(counter) - 1)))
+            p <- p + geom_point(size = 4, colour = data2()$count[!is.na(data2()$Prediction)], shape = 15)
             p <- p + ylim(yli[1], yli[2]) + coord_cartesian(xlim = lim)
-            p <- p + geom_errorbarh(xmax = data2()$Upper.bound, xmin = data2()$Lower.bound,
-                                    size = 1.45, height = 0.4, colour = data2()$count)
+            p <- p + geom_errorbarh(xmax = data2()$Upper.bound[!is.na(data2()$Prediction)], xmin = data2()$Lower.bound[!is.na(data2()$Prediction)],
+                                    size = 1.45, height = 0.4, colour = data2()$count[!is.na(data2()$Prediction)])
             p <- p + labs(title = paste(clevel * 100, "% ", "Confidence Interval for Response", sep = ""),
                           x = "Response", y = NULL)
             p <- p + theme_bw() + theme(axis.text.y = element_blank(), text = element_text(face = "bold", size = 14))
@@ -247,15 +273,19 @@ DynNom.glm <- function(model, data,
         })
       }
 
-      if (mfamily == "poisson" |
-          mfamily == "quasipoisson" |
-          mfamily == "Gamma") {
+      if (model$family$family == "poisson" |
+          model$family$family == "quasipoisson" |
+          model$family$family == "Gamma") {
         output$plot <- renderPlot({
           if (input$add == 0)
             return(NULL)
+
           OUT <- isolate({
             if (is.null(new.d()))
               return(NULL)
+
+            if (dim(na.omit(data2()))[1]==0 ) return(NULL)
+
             if (is.na(input$lxlim) | is.na(input$uxlim)) {
               lim <- c(0, limits0[2])
             } else {
@@ -264,11 +294,11 @@ DynNom.glm <- function(model, data,
             yli <- c(0 - 0.5, 10 + 0.5)
             if (dim(input.data)[1] > 11)
               yli <- c(dim(input.data)[1] - 11.5, dim(input.data)[1] - 0.5)
-            p <- ggplot(data = data2(), aes(x = Prediction, y = 0:(sum(counter) - 1)))
-            p <- p + geom_point(size = 4, colour = data2()$count, shape = 15)
+            p <- ggplot(data = data2()[!is.na(data2()$Prediction),], aes(x = Prediction, y = 0:(sum(counter) - 1)))
+            p <- p + geom_point(size = 4, colour = data2()$count[!is.na(data2()$Prediction)], shape = 15)
             p <- p + ylim(yli[1], yli[2]) + coord_cartesian(xlim = lim)
-            p <- p + geom_errorbarh(xmax = data2()$Upper.bound, xmin = data2()$Lower.bound,
-                                    size = 1.45, height = 0.4, colour = data2()$count)
+            p <- p + geom_errorbarh(xmax = data2()$Upper.bound[!is.na(data2()$Prediction)], xmin = data2()$Lower.bound[!is.na(data2()$Prediction)],
+                                    size = 1.45, height = 0.4, colour = data2()$count[!is.na(data2()$Prediction)])
             p <- p + labs(title = paste(clevel * 100, "% ", "Confidence Interval for Response", sep = ""),
                           x = "Response", y = NULL)
             p <- p + theme_bw() + theme(axis.text.y = element_blank(), text = element_text(face = "bold", size = 14))
@@ -277,14 +307,17 @@ DynNom.glm <- function(model, data,
         })
       }
 
-      if (mfamily == "binomial" |
-          mfamily == "quasibinomial") {
+      if (model$family$family == "binomial" |
+          model$family$family == "quasibinomial") {
         output$plot <- renderPlot({
           if (input$add == 0)
             return(NULL)
           OUT <- isolate({
             if (is.null(new.d()))
               return(NULL)
+
+            if (dim(na.omit(data2()))[1]==0 ) return(NULL)
+
             if (is.na(input$lxlim) | is.na(input$uxlim)) {
               lim <- c(0, 1)
             } else {
@@ -293,11 +326,11 @@ DynNom.glm <- function(model, data,
             yli <- c(0 - 0.5, 10 + 0.5)
             if (dim(input.data)[1] > 11)
               yli <- c(dim(input.data)[1] - 11.5, dim(input.data)[1] - 0.5)
-            p <- ggplot(data = data2(), aes(x = Prediction, y = 0:(sum(counter) - 1)))
-            p <- p + geom_point(size = 4, colour = data2()$count, shape = 15)
+            p <- ggplot(data = data2()[!is.na(data2()$Prediction),], aes(x = Prediction, y = 0:(sum(counter) - 1)))
+            p <- p + geom_point(size = 4, colour = data2()$count[!is.na(data2()$Prediction)], shape = 15)
             p <- p + ylim(yli[1], yli[2]) + coord_cartesian(xlim = lim)
-            p <- p + geom_errorbarh(xmax = data2()$Upper.bound, xmin = data2()$Lower.bound,
-                                    size = 1.45, height = 0.4, colour = data2()$count)
+            p <- p + geom_errorbarh(xmax = data2()$Upper.bound[!is.na(data2()$Prediction)], xmin = data2()$Lower.bound[!is.na(data2()$Prediction)],
+                                    size = 1.45, height = 0.4, colour = data2()$count[!is.na(data2()$Prediction)])
             p <- p + labs(title = paste(clevel * 100, "% ", "Confidence Interval for Response", sep = ""),
                           x = "Probability", y = NULL)
             p <- p + theme_bw() + theme(axis.text.y = element_blank(), text = element_text(face = "bold", size = 14))
@@ -312,11 +345,17 @@ DynNom.glm <- function(model, data,
             if (nrow(data2() > 0)) {
               if (dim(input.data)[2] == 1) {
                 in.d <- data.frame(input.data[-1, ])
-                names(in.d) <- names(attr(model$terms, "dataClasses"))[2]
+                names(in.d) <- vars[2]           
                 data.p <- cbind(in.d, data2()[1:3])
+                data.p$Prediction[is.na(data.p$Prediction)] <- "Not"
+                data.p$Lower.bound[is.na(data.p$Lower.bound)] <- "IN"
+                data.p$Upper.bound[is.na(data.p$Upper.bound)] <- "RANGE"
               }
               if (dim(input.data)[2] > 1) {
                 data.p <- cbind(input.data[-1, ], data2()[1:3])
+                data.p$Prediction[is.na(data.p$Prediction)] <- "Not"
+                data.p$Lower.bound[is.na(data.p$Lower.bound)] <- "IN"
+                data.p$Upper.bound[is.na(data.p$Upper.bound)] <- "RANGE"
               }
               stargazer(data.p, summary = FALSE, type = "text")
             }
@@ -325,29 +364,45 @@ DynNom.glm <- function(model, data,
       })
 
       output$summary <- renderPrint({
-        if (mfamily == "binomial" |
-            mfamily == "quasibinomial") {
+        if (model$family$family == "binomial" |
+            model$family$family == "quasibinomial") {
           coef.c <- exp(model$coef)
-          summ <- summary(model)
           ci.c <- matrix(NA,length(model$coefficients),2)
           colnames(ci.c) <- c("2.5 %","97.5 %")
           rownames(ci.c) <- names(model$coefficients)
 
           for(i in 1:length(model$coefficients)){
-            ci.c[i,1] <- exp(summ$coefficients[i,1] - (summ$coefficients[i,2]*qnorm(1 - (1 - clevel)/2)))
-            ci.c[i,2] <- exp(summ$coefficients[i,1] + (summ$coefficients[i,2]*qnorm(1 - (1 - clevel)/2)))
+            ci.c[i,1] <- exp(model$coefficients[[i]] - (sqrt(vcov(model)[i,i])*qnorm(1 - (1 - clevel)/2)))
+            ci.c[i,2] <- exp(model$coefficients[[i]] + (sqrt(vcov(model)[i,i])*qnorm(1 - (1 - clevel)/2)))
           }
-          stargazer(model, coef = list(coef.c), ci.custom = list(ci.c), p.auto = F, type = "text",
-                    omit.stat = c("LL", "ser", "f"), ci = TRUE, ci.level = clevel, single.row = TRUE,
-                    title = paste(mfamily, " regression (", model$family$link, "): ", model$formula[2],
-                                  " ", model$formula[1], " ", model$formula[3], sep = ""))
+
+          if(is.null(model$stat)==T){
+            stargazer(model,coef = list(coef.c), ci.custom = list(ci.c), p.auto = F, type = "text",
+                      omit.stat = c("LL", "ser", "f"), ci = TRUE, ci.level = clevel, single.row = TRUE,
+                      title = paste(model$family$family, " regression (", model$family$link, "): ", model$formula[2],
+                                    " ", model$formula[1], " ", model$formula[3], sep = ""))
+
+          } else{
+            stargazer(model,model$stats, coef = list(coef.c), ci.custom = list(ci.c), p.auto = F, type = "text",
+                      omit.stat = c("LL", "ser", "f"), ci = TRUE, ci.level = clevel, single.row = TRUE,
+                      title = paste(model$family$family, " regression (", model$family$link, "): ", model$formula[2],
+                                    " ", model$formula[1], " ", model$formula[3], sep = ""))
+          }
+
         } else {
-          stargazer(model, type = "text", omit.stat = c("LL", "ser", "f"),
-                    ci = TRUE, ci.level = clevel, single.row = TRUE,
-                    title = paste(mfamily, " regression (", model$family$link, "): ", model$formula[2],
-                                  " ", model$formula[1], " ", model$formula[3], sep = ""))
+          if(is.null(model$stat)==T){
+            stargazer(model,type = "text", omit.stat = c("LL", "ser", "f"),
+                      ci = TRUE, ci.level = clevel, single.row = TRUE,
+                      title = paste(model$family$family, " regression (", model$family$link, "): ", model$formula[2],
+                                    " ", model$formula[1], " ", model$formula[3], sep = ""))
+          } else{
+            stargazer(model,model$stats, type = "text", omit.stat = c("LL", "ser", "f"),
+                      ci = TRUE, ci.level = clevel, single.row = TRUE,
+                      title = paste(model$family$family, " regression (", model$family$link, "): ", model$formula[2],
+                                    " ", model$formula[1], " ", model$formula[3], sep = ""))
+          }
         }
-      })}
+        })}
   )
   )
 }
