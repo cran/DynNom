@@ -47,7 +47,7 @@ distance <- (x1 + x2 / 3 + rnorm(200)) ^ 2
 d <- datadist(x1, x2)
 options(datadist = "d")
 data1 = data.frame(distance, x1, x2, x3)
-model1 <- Glm(distance ~ x3 + rcs(x1, 4) * scored(x2), data = data)
+model1 <- Glm(distance ~ x3 + rcs(x1, 4) * scored(x2), data = data1)
 DynNom.Glm(model1, data1)
 
 # example 2 - a poisson regression model

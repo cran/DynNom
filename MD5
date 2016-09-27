@@ -1,4 +1,4 @@
-91add92e484c326f4b08a076d479053d *DESCRIPTION
+ce4e4fc2eb395eb491589a63a7f69e72 *DESCRIPTION
 91f051d0659d188e63286cbd7092a36d *NAMESPACE
 23bb1c3880718d28941cef1793fb6e68 *R/DynNom.R
 70a130789b8f4fc426d700eb42974d0c *R/DynNom_coxph.R
@@ -12,7 +12,7 @@ f1c8f20a89945a3dcef2799d0233f263 *man/DynNom.Rd
 dd770c5212dfd0a9e5fad60efe819839 *man/DynNom.coxph.Rd
 33269e36a7bd1f9c2ca14207d14fc5ec *man/DynNom.glm.Rd
 2b8fe78e9cfb9c3ceedfa6219470f911 *man/DynNom.lm.Rd
-f69ab7e2dccee8907baf732a609847fd *man/DynNom.rms.Glm.Rd
-692c94e01e8485cd034d06bc72582479 *man/DynNom.rms.cph.Rd
-fa2e1014d863954f6e00a2cfb64fd45e *man/DynNom.rms.lrm.Rd
-6f933e4067e7db9b8b7d82fb4d9c0ae5 *man/DynNom.rms.ols.Rd
+f16b644b10dd2c4251751ec86348bfa3 *man/DynNom.rms.Glm.Rd
+fd7996e4edb565640337c2a3e12fc8ab *man/DynNom.rms.cph.Rd
+2a31ad113301532811ef4111b90e7404 *man/DynNom.rms.lrm.Rd
+74231a945ed7f9cb053883fffd9ed867 *man/DynNom.rms.ols.Rd

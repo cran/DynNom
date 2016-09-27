@@ -1,7 +1,7 @@
 \name{DynNom.cph}
 \alias{DynNom.cph}
 \title{
-Dynamic Nomograms for Cox Proportional Hazards Models and Extensions
+Dynamic Nomograms for Cox Proportional Hazards Models from the \code{rms} package
 }
 \description{
 \code{DynNom.cph} displays the results of a \code{cph} model object from \code{rms} package as a dynamic nomogram in an 'RStudio' panel or web browser.
@@ -45,14 +45,14 @@ Davood Roshan, Amirhossein Jalali, Alberto Alvarez-Iglesias, John Newell
 data = veteran
 model1 <- cph((Surv(log(time), status)) ~ rcs(age, 4) * strat(trt) +
               diagtime * strat(prior) + lsp(karno, 60), data = veteran)
-model1 <- update(model, x = T, y = T, surv = T)
+model1 <- update(model1, x = T, y = T, surv = T)
 DynNom.cph(model1, data)
 DynNom(model1, data, ptype = "1-st")
 
 # example 2
 data(lung)
-Surv = Surv(time, status)
-model2 <- cph(Surv ~ age + strat(sex) + ph.ecog , data = lung)
+sfit = Surv(lung$time, lung$status)
+model2 <- cph(sfit ~ age + strat(sex) + ph.ecog , data = lung)
 DynNom.cph(model2, lung)
 }
 

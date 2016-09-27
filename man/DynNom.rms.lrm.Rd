@@ -1,7 +1,7 @@
 \name{DynNom.lrm}
 \alias{DynNom.lrm}
 \title{
-Dynamic Nomograms for Logistic Regression Models
+Dynamic Nomograms for Logistic Regression Models from the \code{rms} package
 }
 \description{
 \code{DynNOm.lrm} displays the results of a \code{lrm} model object from the \code{rms} package as a dynamic nomogram in an 'RStudio' panel or web browser.

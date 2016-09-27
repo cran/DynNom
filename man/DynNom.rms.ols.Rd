@@ -45,20 +45,19 @@ x4 <- runif(200)
 y <- x1 + x2 + rnorm(200)
 data = data.frame(x1, x2, x3, x4, y)
 f    <- ols(y ~ rcs(x1, 4) + x2 + x3 + x4)
-DynNom.Ols(f, data)
+DynNom.ols(f, data)
 
 # example 2
 data1 = as.data.frame(Titanic)
 year <- sample(c(1:5), 32, replace = TRUE)
 data <- data.frame(year, data1)
 model <- ols(year ~ Age + Class + Sex, data = data, weights = Freq)
-DynNom.Ols(model, data)
+DynNom.ols(model, data)
 }
 
 if (interactive()) {
 data1 <- data.frame(state.x77)
-fit1 <- ols(Life.Exp ~ Population + Income + Illiteracy + Murder + HS.Grad +
-Frost + Area , data = data1)
+fit1 <- ols(Life.Exp ~ Population + Income + Murder + Frost , data = data1)
 DynNom(fit1, data1)
 }
 }
