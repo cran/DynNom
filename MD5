@@ -1,5 +1,9 @@
-ce4e4fc2eb395eb491589a63a7f69e72 *DESCRIPTION
-91f051d0659d188e63286cbd7092a36d *NAMESPACE
+c797305c2af81cb506f879a80057a85c *DESCRIPTION
+6aaa8e78f4cb0f18a0d728664922d55b *NAMESPACE
+c472c687854b868f13b9439d6f8a6f5d *R/DNbuilder-coxph.R
+dc5834afe83b37e43642c11f5bd7dd7c *R/DNbuilder-glm.R
+da5f06b0b86d63bfe5d60f8a8006f6e6 *R/DNbuilder-lm.R
+7a1eb08c600bb90ba8eb30bbcef39ee4 *R/DNbuilder.R
 23bb1c3880718d28941cef1793fb6e68 *R/DynNom.R
 70a130789b8f4fc426d700eb42974d0c *R/DynNom_coxph.R
 5b5bf1d701eeed48c2faf3c92f9dec43 *R/DynNom_glm.R
@@ -8,6 +12,10 @@ ce4e4fc2eb395eb491589a63a7f69e72 *DESCRIPTION
 d1803b4b31cd098b8a9a8ff08dcd69c6 *R/DynNom_rmscph.R
 4ee4189c3db93c2f361200cae47b5c4e *R/DynNom_rmslrm.R
 4049e370b9d42aa6e417c38c01574b03 *R/DynNom_rmsols.R
+b63420e7cfe62b47a0922a744da67bc3 *man/DNbuilder.Rd
+c8ecc17a1c1b51c2b684995fea205e4f *man/DNbuilder.coxph.Rd
+e57251dbcb77b21d765b7b06d1c47571 *man/DNbuilder.glm.Rd
+09d5fce1f9e148b3523ee79ff32611fd *man/DNbuilder.lm.Rd
 f1c8f20a89945a3dcef2799d0233f263 *man/DynNom.Rd
 dd770c5212dfd0a9e5fad60efe819839 *man/DynNom.coxph.Rd
 33269e36a7bd1f9c2ca14207d14fc5ec *man/DynNom.glm.Rd

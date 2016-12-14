@@ -2,15 +2,15 @@ Package: DynNom
 Type: Package
 Title: Dynamic Nomograms for Linear, Generalized Linear and
         Proportional Hazard Models
-Version: 3.0.1
+Version: 4.0
 Author: Amirhossein Jalali, Davood Roshan, Alberto Alvarez-Iglesias, John Newell
 Maintainer: Amirhossein Jalali <a.jalali2@nuigalway.ie>
-Description: Demonstrate the results of a statistical model object as a dynamic nomogram in an 'RStudio' panel or web browser. DynNom supports a variety of model objects; 'lm', 'glm', 'coxph' and also 'Ols', 'Glm', 'lrm', 'cph' models.
+Description: Demonstrate the results of a statistical model object as a dynamic nomogram in an 'RStudio' panel or web browser. Also, the generic DNbuilder function in this package provides a simple and straightforward way to build and publish a dynamic nomogram on the web to use the app independent of R. DynNom supports a variety of model objects; 'lm', 'glm', 'coxph' and also 'Ols', 'Glm', 'lrm', 'cph' models.
 License: GPL-2
 LazyData: TRUE
 Depends: ggplot2, survival (>= 2.38-3), rms
 Imports: shiny, stargazer, compare, BBmisc
 NeedsCompilation: no
-Packaged: 2016-09-27 18:38:34 UTC; Amir
+Packaged: 2016-12-14 16:35:00 UTC; Amir
 Repository: CRAN
-Date/Publication: 2016-09-27 21:52:24
+Date/Publication: 2016-12-14 18:36:25
