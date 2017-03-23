@@ -4,12 +4,11 @@
   Dynamic Nomograms for Linear, Generalized Linear and Proportional Hazards Models
 }
 \description{
-  \code{DynNom} is a generic function for displaying the results of an statistical model object as a dynamic nomogram in an 'RStudio' panel or web browser. \code{DynNom} supports a variety of model objects; \code{lm}, \code{glm}, \code{coxph} and also \code{Ols}, \code{Glm}, \code{lrm}, \code{cph} models in the \code{rms} package. It is a translational tool aiming to provide easy, informative individual predictions.
+  \code{DynNom} is a generic function for displaying the results of an statistical model object as a dynamic nomogram in an 'RStudio' panel or web browser. \code{DynNom} supports a variety of model objects; \code{lm}, \code{glm}, \code{coxph} and also \code{ols}, \code{Glm}, \code{lrm}, \code{cph} models in the \code{rms} package. It is a translational tool aiming to provide easy, informative individual predictions.
 }
 \usage{
-DynNom(model, data,
-       clevel = 0.95, covariate = c("slider", "numeric"),
-       ptype = c("st", "1-st"))
+DynNom(model, data, clevel = 0.95, m.summary = c("raw", "formatted"),
+                   covariate = c("slider", "numeric"), ptype = c("st", "1-st"))
 }
 \arguments{
   \item{model}{
@@ -20,6 +19,9 @@ DynNom(model, data,
 }
   \item{clevel}{
   confidence level required
+}
+  \item{m.summary}{
+  The option to choose the format of the model output in the 'Summary Model' tab. If "raw" (the default) is chosen the result of summary(model) will be display while if "formatted" is chosen the model summary using the stargazer package will be displayed.
 }
   \item{covariate}{
   The option to choose the type of covariate(s) input control widget for numeric values. If "slider" (the default) is chosen a shiny application with slider control widgets are used while if "numeric" is chosen numeric values input controls will be displayed.
@@ -36,7 +38,7 @@ The individual predictions with a relative confidence interval are calculated us
 \references{
 Banks, J. 2006. Nomograms. Encyclopedia of Statistical Sciences. 8. \cr
 Easy web applications in R. \url{http://shiny.rstudio.com} \cr
-Frank E Harrell Jr (2016). rms: Regression Modeling Strategies. R package version 4.5-0.
+Frank E Harrell Jr (2017). rms: Regression Modeling Strategies. R package version 4.5-0.
 \url{https://CRAN.R-project.org/package=rms}
 }
 \author{
@@ -45,7 +47,7 @@ Amirhossein Jalali, Davood Roshan, Alberto Alvarez-Iglesias, John Newell
 Maintainer: Amirhossein Jalali <a.jalali2@nuigalway.ie>
 }
 \section{Please cite as:}{
-Jalali, A., Roshan, D., Alvarez-Iglesias, A., Newell, J. (2016). Dynamic Nomograms for Linear, Generalized Linear and Proportional Hazard Models. R package version 3.0.
+Jalali, A., Roshan, D., Alvarez-Iglesias, A., Newell, J. (2017). Dynamic Nomograms for Linear, Generalized Linear and Proportional Hazard Models. R package version 4.1.
 }
 \seealso{
 \code{\link{DynNom.lm}}, \code{\link{DynNom.glm}}, \code{\link{DynNom.coxph}}, \code{\link{DynNom.ols}}, \code{\link{DynNom.lrm}}, \code{\link{DynNom.Glm}}, \code{\link{DynNom.cph}}
@@ -68,7 +70,7 @@ model3 <- glm(Survived ~ Age + Class + Sex, data = data2, weights = Freq,
 DynNom(model3, data2, clevel = 0.9)
 
 model4 <- lrm(formula= vs ~ wt + disp, data = mtcars)
-DynNom(model4, mtcars, clevel = 0.9)
+DynNom(model4, mtcars, clevel = 0.9, m.summary = "formatted")
 
 counts <- c(18, 17, 15, 20, 10, 20, 25, 13, 12)
 outcome <- gl(3, 1, 9)

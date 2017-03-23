@@ -7,9 +7,8 @@ Shiny code for Dynamic Nomograms
   \code{DNbuilder} is a generic function to build dynamic nomograms and provide the required scripts for deploying them on a server on the web such as the \url{http://shinyapps.io}. \code{DNbuilder} supports \code{lm}, \code{glm}, \code{coxph} model objects.
 }
 \usage{
-DNbuilder(model, data,
-       clevel = 0.95, covariate = c("slider", "numeric"),
-       ptype = c("st", "1-st"))
+DNbuilder(model, data, clevel = 0.95, m.summary = c("raw", "formatted"),
+                   covariate = c("slider", "numeric"), ptype = c("st", "1-st"))
 }
 \arguments{
   \item{model}{
@@ -20,6 +19,9 @@ DNbuilder(model, data,
 }
   \item{clevel}{
   confidence level required
+}
+  \item{m.summary}{
+  The option to choose the format of the model output in the 'Summary Model' tab. If "raw" (the default) is chosen the result of summary(model) will be display while if "formatted" is chosen the model summary using the stargazer package will be displayed.
 }
   \item{covariate}{
   The option to choose the type of covariate(s) input control widget for numeric values. If "slider" (the default) is chosen a shiny application with slider control widgets are used while if "numeric" is chosen numeric values input controls will be displayed.

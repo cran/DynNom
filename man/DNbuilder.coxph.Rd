@@ -7,9 +7,8 @@ Shiny code for Dynamic Nomograms
 \code{DNbuilder.coxph} provides required scripts to deploy an \code{lm} model object as a dynamic nomogram on a server on the web such as the \url{http://shinyapps.io}.
 }
 \usage{
-DNbuilder.coxph(model, data,
-             clevel = 0.95, covariate = c("slider", "numeric"),
-             ptype = c("st", "1-st"))
+DNbuilder.coxph(model, data, clevel = 0.95, m.summary = c("raw", "formatted"),
+                   covariate = c("slider", "numeric"), ptype = c("st", "1-st"))
 }
 \arguments{
   \item{model}{
@@ -20,6 +19,9 @@ DNbuilder.coxph(model, data,
 }
   \item{clevel}{
   confidence level required
+}
+  \item{m.summary}{
+  The option to choose the format of the model output in the 'Summary Model' tab. If "raw" (the default) is chosen the result of summary(model) will be display while if "formatted" is chosen the model summary using the stargazer package will be displayed.
 }
   \item{covariate}{
   The option to choose the type of covariate(s) input control widget for numeric values. If "slider" (the default) is chosen a shiny application with slider control widgets are used while if "numeric" is chosen numeric values input controls will be displayed.

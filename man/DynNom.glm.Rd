@@ -7,8 +7,8 @@ Dynamic Nomograms for Generalized Linear Models
 \code{DynNom.glm} displays the results of a \code{glm} model object as a dynamic nomogram in an 'RStudio' panel or web browser.
 }
 \usage{
-DynNom.glm(model, data,
-           clevel = 0.95, covariate = c("slider", "numeric"))
+DynNom.glm(model, data, clevel = 0.95, m.summary = c("raw", "formatted"),
+                      covariate = c("slider", "numeric"))
 }
 \arguments{
   \item{model}{
@@ -19,6 +19,9 @@ DynNom.glm(model, data,
 }
   \item{clevel}{
   confidence level required
+}
+  \item{m.summary}{
+  The option to choose the format of the model output in the 'Summary Model' tab. If "raw" (the default) is chosen the result of summary(model) will be display while if "formatted" is chosen the model summary using the stargazer package will be displayed.
 }
   \item{covariate}{
   The option to choose the type of covariate(s) input control widget for numeric values. If "slider" (the default) is chosen a shiny application with slider control widgets are used while if "numeric" is chosen numeric values input controls will be displayed.
@@ -45,7 +48,7 @@ DynNom(model1, swiss, clevel = 0.9)
 data1 =as.data.frame(Titanic)
 model2 <- glm(Survived ~ Age + Class + Sex, data = data1, weights = Freq,
               family = binomial("probit"))
-DynNom(model2, as.data.frame(Titanic), clevel = 0.9)
+DynNom(model2, as.data.frame(Titanic), clevel = 0.9, m.summary = "formatted")
 }
 
 if (interactive()) {

@@ -1,8 +1,7 @@
-if (getRversion() >= "2.15.1") utils::globalVariables(c("counter", "Prediction", "input.data", "old.d", "old.d2", "surv", "event", "n.risk", "part"))
+utils::globalVariables(c("old.d2", "surv", "event", "n.risk", "part"))
 
-DynNom.coxph <- function(model, data,
-                         clevel = 0.95, covariate = c("slider", "numeric"),
-                         ptype = c("st", "1-st")) {
+DynNom.coxph <- function(model, data, clevel = 0.95, m.summary = c("raw", "formatted"),
+                         covariate = c("slider", "numeric"), ptype = c("st", "1-st")) {
 
   data <- data.frame(data)
 
@@ -52,11 +51,10 @@ DynNom.coxph <- function(model, data,
 
   coll <- c(1:50)
   covariate <- match.arg(covariate)
+  m.summary <- match.arg(m.summary)
   ptype <- match.arg(ptype)
   input.data <- NULL
   old.d <- NULL
-
-  n.strata <- length(attr(model$terms, "specials")$strata)
 
   runApp(list(
 
@@ -72,7 +70,7 @@ DynNom.coxph <- function(model, data,
       ),
       mainPanel(tabsetPanel(id = "tabs",
                             tabPanel("Estimated S(t)", plotOutput("plot")),
-                            tabPanel("Predicted Survival", plotOutput("plot2")),
+                            tabPanel("Predicted Survival", plotlyOutput("plot2")),
                             tabPanel("Numerical Summary", verbatimTextOutput("data.pred")),
                             tabPanel("Model Summary", verbatimTextOutput("summary"))
       )
@@ -145,8 +143,6 @@ DynNom.coxph <- function(model, data,
         i.numeric[dim(i.numeric)[1], 3] <- which(names(data) == i.numeric[dim(i.numeric)[1], 1])
       }
 
-      limits0 <- c(0, as.integer(quantile(na.omit(data[,as.numeric(i.numeric[dim(i.numeric)[1] - 1, 3])]), probs = 0.7)))
-
       nn <- nrow(i.numeric)
       if (is.null(nn)) {
         nn <- 0
@@ -173,23 +169,23 @@ DynNom.coxph <- function(model, data,
             if (nn > 2){
               slide.bars <- list(lapply(1:(nn - 2), function(j) {
                 sliderInput(paste("numeric", j, sep = ""), i.numeric[j, 1],
-                            min = as.integer(min(na.omit(data[, as.numeric(i.numeric[j, 3])]))),
-                            max = as.integer(max(na.omit(data[, as.numeric(i.numeric[j, 3])]))) + 1,
-                            value = as.integer(mean(na.omit(data[, as.numeric(i.numeric[j, 3])]))))
+                            min = floor(min(na.omit(data[, as.numeric(i.numeric[j, 3])]))),
+                            max = ceiling(max(na.omit(data[, as.numeric(i.numeric[j, 3])]))),
+                            value = mean(na.omit(data[, as.numeric(i.numeric[j, 3])])))
               }), br(), checkboxInput("times", "Predicted Survival at this Follow Up:"),
               conditionalPanel(condition = "input.times == true",
                                sliderInput(paste("numeric", (nn - 1), sep = ""), i.numeric[(nn - 1), 1],
-                                           min = as.integer(min(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))),
-                                           max = as.integer(max(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))) + 1,
-                                           value = as.integer(mean(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))))))
+                                           min = floor(min(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))),
+                                           max = ceiling(max(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))),
+                                           value = mean(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])])))))
             }
             if (nn == 2){
               slide.bars <- list(br(), checkboxInput("times", "Predicted Survival at this Follow Up:"),
-              conditionalPanel(condition = "input.times == true",
-                               sliderInput(paste("numeric", (nn - 1), sep = ""), i.numeric[(nn - 1), 1],
-                                           min = as.integer(min(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))),
-                                           max = as.integer(max(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))) + 1,
-                                           value = as.integer(mean(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))))))
+                                 conditionalPanel(condition = "input.times == true",
+                                                  sliderInput(paste("numeric", (nn - 1), sep = ""), i.numeric[(nn - 1), 1],
+                                                              min = floor(min(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))),
+                                                              max = ceiling(max(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))),
+                                                              value = mean(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])])))))
             }
           }
 
@@ -197,17 +193,17 @@ DynNom.coxph <- function(model, data,
             if (nn > 2){
               slide.bars <- list(lapply(1:(nn - 2), function(j) {
                 numericInput(paste("numeric", j, sep = ""), i.numeric[j, 1],
-                             value = as.integer(mean(na.omit(data[, as.numeric(i.numeric[j, 3])]))))
+                             value = round(mean(na.omit(data[, as.numeric(i.numeric[j, 3])]))))
               }), br(), checkboxInput("times", "Predicted Survival at this Follow Up:"),
               conditionalPanel(condition = "input.times == true",
                                numericInput(paste("numeric", (nn - 1), sep = ""), i.numeric[(nn - 1), 1],
-                                            value = as.integer(mean(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))))))
+                                            value = round(mean(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))))))
             }
             if (nn == 2){
               slide.bars <- list(br(), checkboxInput("times", "Predicted Survival at this Follow Up:"),
-              conditionalPanel(condition = "input.times == true",
-                               numericInput(paste("numeric", (nn - 1), sep = ""), i.numeric[(nn - 1), 1],
-                                            value = as.integer(mean(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))))))
+                                 conditionalPanel(condition = "input.times == true",
+                                                  numericInput(paste("numeric", (nn - 1), sep = ""), i.numeric[(nn - 1), 1],
+                                                               value = round(mean(na.omit(data[, as.numeric(i.numeric[(nn - 1), 3])]))))))
             }
           }
           do.call(tagList, slide.bars)
@@ -215,11 +211,13 @@ DynNom.coxph <- function(model, data,
       }
 
       a <- 0
+      old.d <- NULL
       new.d <- reactive({
+        input$add
         if (nf > 0) {
           input.f <- vector("list", nf)
           for (i in 1:nf) {
-            input.f[[i]] <- local({
+            input.f[[i]] <- isolate({
               input[[paste("factor", i, sep = "")]]
             })
             names(input.f)[i] <- i.factor[i, 1]
@@ -228,7 +226,7 @@ DynNom.coxph <- function(model, data,
         if (nn > 1) {
           input.n <- vector("list", (nn - 1))
           for (i in 1:(nn - 1)) {
-            input.n[[i]] <- local({
+            input.n[[i]] <- isolate({
               input[[paste("numeric", i, sep = "")]]
             })
             names(input.n)[i] <- i.numeric[i, 1]
@@ -251,14 +249,15 @@ DynNom.coxph <- function(model, data,
         if (a > 0) {
           wher <- match(names(out), names(input.data))
           out2 <- cbind(out[wher], NO=input$add)
-          input.data <<- rbind(input.data, out2)
+          if (isTRUE(compare(old.d, out)) == FALSE) {
+            input.data <<- rbind(input.data, out2)
+          }
         }
         a <<- a + 1
         out
       })
 
       p1 <- NULL
-      old.d <- NULL
       data2 <- reactive({
         if (input$add == 0)
           return(NULL)
@@ -288,8 +287,7 @@ DynNom.coxph <- function(model, data,
                 d.p <- data.frame(Prediction = 1 - exp(-pred$fit), Lower.bound = 1 - upb,
                                   Upper.bound = 1 - lwb)
               }
-
-              old.d <<- new.d()
+              old.d <<- new.d[,-1]
               data.p <- cbind(d.p, counter = 1, NO=input$add)
               p1 <<- rbind(p1, data.p)
               p1$count <- seq(1, dim(p1)[1])
@@ -324,111 +322,101 @@ DynNom.coxph <- function(model, data,
             }
             aa <- aa + 1
           }
-          sub.fit1 <- subset(as.data.frame(summary(fit1)[2:8]), strata == nam)
+          sub.fit1 <- subset(as.data.frame(summary(fit1)[c(2:4,6:7)]), strata == nam)
           return(sub.fit1)
         })
       }
 
       dat.p <- reactive({
         if (isTRUE(compare(old.d2, new.d())) == FALSE) {
-          s.frame <- isolate({
-            fit1 <- survfit(model, newdata = new.d())
-            if (n.strata == 0) {
-              sff <- as.data.frame(summary(fit1)[2:8])
-              sff <- cbind(sff, event=1-sff[[5]], part = b)
-              if (sff$time[1] != 0){
-                sff2 <- sff[1, ]
-                sff2[1, ] <- NA
-                sff2$time[1] <- 0
-                sff2$n.risk[1] <- model$n
-                sff2$surv[1] <- 1
-                sff2$event[1] <- 0
-                sff2$part[1] <- sff$part[1]
-                s.f <- rbind(sff2, sff)
-              } else {
-                s.f <- sff
-              }
+          fit1 <- survfit(model, newdata = new.d())
+          if (n.strata == 0) {
+            sff <- as.data.frame(summary(fit1)[c(2:4,6:7)])
+            sff <- cbind(sff, event=1-sff$surv, part = b)
+            if (sff$time[1] != 0){
+              sff2 <- sff[1, ]
+              sff2[1, ] <- NA
+              sff2$time[1] <- 0
+              sff2$n.risk[1] <- model$n
+              sff2$surv[1] <- 1
+              sff2$event[1] <- 0
+              sff2$part[1] <- sff$part[1]
+              s.f <- rbind(sff2, sff)
+            } else {
+              s.f <- sff
             }
-            if (n.strata > 0) {
-              sff <- cbind(sub.fit1(), part = b)
-              sff <- cbind(sff, event=1-sff[[6]])
-              if (sff$time[1] != 0) {
-                sff2 <- sff[1, ]
-                sff2[1, ] <- NA
-                sff2$time[1] <- 0
-                sff2$n.risk[1] <- sff[1,2]
-                sff2$surv[1] <- 1
-                sff2$event[1] <- 0
-                sff2$part[1] <- sff$part[1]
-                s.f <- rbind(sff2, sff)
-              } else {
-                s.f <- sff
-              }
-              s.f$n.risk <- s.f$n.risk/s.f$n.risk[1]
+          }
+          if (n.strata > 0) {
+            sff <- cbind(sub.fit1(), part = b)
+            sff <- cbind(sff, event=1-sff$surv)
+            if (sff$time[1] != 0) {
+              sff2 <- sff[1, ]
+              sff2[1, ] <- NA
+              sff2$time[1] <- 0
+              sff2$n.risk[1] <- sff[1,2]
+              sff2$surv[1] <- 1
+              sff2$event[1] <- 0
+              sff2$part[1] <- sff$part[1]
+              s.f <- rbind(sff2, sff)
+            } else {
+              s.f <- sff
             }
-            if (dim(s.f)[1] < 3) {
-              St <<- FALSE
-              stop("Error in data structure: There is not enough data in the current strata level")
-            }
-            s.fr <<- rbind(s.fr, s.f)
-            old.d2 <<- new.d()
-            b <<- b + 1
-            s.fr
-          })
-        } else {
-          s.frame <- isolate({
-            s.fr
-          })
+            s.f$n.risk <- s.f$n.risk/s.f$n.risk[1]
+          }
+          if (dim(s.f)[1] < 3) {
+            St <<- FALSE
+            stop("Error in data structure: There is not enough data in the current strata level")
+          }
+          s.fr <<- rbind(s.fr, s.f)
+          old.d2 <<- new.d()
+          b <<- b + 1
         }
+        s.fr
       })
 
       output$plot <- renderPlot({
+        data2()
         if (St == TRUE) {
           if (input$add == 0)
             return(NULL)
           if (input$add > 0) {
             if (input$trans == TRUE) {
               if (ptype == "st") {
-                pl <- isolate({
-                  p2 <- ggplot(data = dat.p())
-                  p2 <- p2 + geom_step(aes(x = time, y = surv, alpha = n.risk, group = part), color = coll[dat.p()$part])
-                  p2 <- p2 + ylim(0, 1) + xlim(0, max(dat.p()$time) * 1.05)
-                  p2 <- p2 + labs(title = "Estimated Survival Probability", x = "Follow Up Time", y = "S(t)") + theme_bw()
-                  p2 <- p2 + theme(text = element_text(face = "bold", size = 14), legend.position = "none")
-                })
+                pl <- ggplot(data = dat.p()) +
+                  geom_step(aes(x = time, y = surv, alpha = n.risk, group = part), color = coll[dat.p()$part]) +
+                  ylim(0, 1) + xlim(0, max(dat.p()$time) * 1.05) +
+                  labs(title = "Estimated Survival Probability", x = "Follow Up Time", y = "S(t)") + theme_bw() +
+                  theme(text = element_text(face = "bold", size = 12), legend.position = "none",
+                        plot.title = element_text(hjust = .5))
               }
               if (ptype == "1-st") {
-                pl <- isolate({
-                  p2 <- ggplot(data = dat.p())
-                  p2 <- p2 + geom_step(aes(x = time, y = event, alpha = n.risk, group = part), color = coll[dat.p()$part])
-                  p2 <- p2 + ylim(0, 1) + xlim(0, max(dat.p()$time) * 1.05)
-                  p2 <- p2 + labs(title = "Estimated Probability", x = "Follow Up Time", y = "F(t)")
-                  p2 <- p2 + theme_bw() + theme(text = element_text(face = "bold", size = 14), legend.position = "none")
-                })
+                pl <- ggplot(data = dat.p()) +
+                  geom_step(aes(x = time, y = event, alpha = n.risk, group = part), color = coll[dat.p()$part]) +
+                  ylim(0, 1) + xlim(0, max(dat.p()$time) * 1.05) +
+                  labs(title = "Estimated Probability", x = "Follow Up Time", y = "F(t)") +
+                  theme_bw() + theme(text = element_text(face = "bold", size = 12), legend.position = "none",
+                                     plot.title = element_text(hjust = .5))
               }
             }
             if (input$trans == FALSE) {
               if (ptype == "st") {
-                pl <- isolate({
-                  p2 <- ggplot(data = dat.p())
-                  p2 <- p2 + geom_step(aes(x = time, y = surv, group = part), color = coll[dat.p()$part])
-                  p2 <- p2 + ylim(0, 1) + xlim(0, max(dat.p()$time) * 1.05)
-                  p2 <- p2 + labs(title = "Estimated Survival Probability", x = "Follow Up Time", y = "S(t)") + theme_bw()
-                  p2 <- p2 + theme(text = element_text(face = "bold", size = 14), legend.position = "none")
-                })
+                pl <- ggplot(data = dat.p()) +
+                  geom_step(aes(x = time, y = surv, group = part), color = coll[dat.p()$part]) +
+                  ylim(0, 1) + xlim(0, max(dat.p()$time) * 1.05) +
+                  labs(title = "Estimated Survival Probability", x = "Follow Up Time", y = "S(t)") + theme_bw() +
+                  theme(text = element_text(face = "bold", size = 12), legend.position = "none",
+                        plot.title = element_text(hjust = .5))
               }
               if (ptype == "1-st") {
-                pl <- isolate({
-                  p2 <- ggplot(data = dat.p())
-                  p2 <- p2 + geom_step(aes(x = time, y = event, group = part), color = coll[dat.p()$part])
-                  p2 <- p2 + ylim(0, 1) + xlim(0, max(dat.p()$time) * 1.05)
-                  p2 <- p2 + labs(title = "Estimated Probability", x = "Follow Up Time", y = "F(t)")
-                  p2 <- p2 + theme_bw() + theme(text = element_text(face = "bold", size = 14), legend.position = "none")
-                })
+                pl <- ggplot(data = dat.p()) +
+                  geom_step(aes(x = time, y = event, group = part), color = coll[dat.p()$part]) +
+                  ylim(0, 1) + xlim(0, max(dat.p()$time) * 1.05) +
+                  labs(title = "Estimated Probability", x = "Follow Up Time", y = "F(t)") +
+                  theme_bw() + theme(text = element_text(face = "bold", size = 12), legend.position = "none",
+                                     plot.title = element_text(hjust = .5))
               }
             }
           }
-          data2()
           print(pl)
         }
         if (St == FALSE) {
@@ -436,54 +424,62 @@ DynNom.coxph <- function(model, data,
         }
       })
 
-      output$plot2 <- renderPlot({
+      output$plot2 <- renderPlotly({
         if (input$add == 0)
           return(NULL)
-        isolate({
-          if (is.null(new.d()))
-            return(NULL)
-          lim <- c(0, 1)
-          yli <- c(0 - 0.5, 10 + 0.5)
-          if (dim(input.data)[1] > 11)
-            yli <- c(dim(input.data)[1] - 11.5, dim(input.data)[1] - 0.5)
-          p <- ggplot(data = data2(), aes(x = Prediction, y = 0:(sum(counter) - 1)))
-          p <- p + geom_point(size = 4, colour = data2()$count, shape = 15)
-          p <- p + ylim(yli[1], yli[2]) + coord_cartesian(xlim = lim)
-          p <- p + geom_errorbarh(xmax = data2()$Upper.bound, xmin = data2()$Lower.bound,
-                           size = 1.45, height = 0.4, colour = data2()$count)
-          if (ptype == "st") {
-            p <- p + labs(title = paste(clevel * 100, "% ", "Confidence Interval for Survival Probability", sep = ""),
-                          x = "Survival Probability", y = NULL)
-          }
-          if (ptype == "1-st") {
-            p <- p + labs(title = paste(clevel * 100, "% ", "Confidence Interval for F(t)", sep = ""),
-                          x = "Probability", y = NULL)
-          }
-          p <- p + theme_bw() + theme(axis.text.y = element_blank(), text = element_text(face = "bold", size = 14))
-          print(p)
-        })
-        data2()
+        if (is.null(new.d()))
+          return(NULL)
+        lim <- c(0, 1)
+        yli <- c(0 - 0.5, 10 + 0.5)
+        PredictNO <- 0:(sum(data2()$counter) - 1)
+        in.d <- data.frame(input.data[-1,-dim(input.data)[2]])
+        xx=matrix(paste(names(in.d), ": ",t(in.d), sep=""), ncol=dim(in.d)[1])
+        text.cov=apply(xx,2,paste,collapse="<br />")
+        if (dim(input.data)[1] > 11)
+          yli <- c(dim(input.data)[1] - 11.5, dim(input.data)[1] - 0.5)
+        p <- ggplot(data = data2(), aes(x = Prediction, y = PredictNO, text = text.cov,
+                                        label = Prediction, label2 = Lower.bound, label3=Upper.bound)) +
+          geom_point(size = 2, colour = data2()$count, shape = 15) +
+          ylim(yli[1], yli[2]) + coord_cartesian(xlim = lim) +
+          geom_errorbarh(xmax = data2()$Upper.bound, xmin = data2()$Lower.bound,
+                         size = 1.45, height = 0.4, colour = data2()$count) +
+          labs(title = paste(clevel * 100, "% ", "Confidence Interval for Survival Probability", sep = ""),
+               x = "Survival Probability", y = NULL) +
+          theme_bw() + theme(axis.text.y = element_blank(), text = element_text(face = "bold", size = 10))
+        if (ptype == "st") {
+          p <- p + labs(title = paste(clevel * 100, "% ", "Confidence Interval for Survival Probability", sep = ""),
+                        x = "Survival Probability", y = NULL)
+        }
+        if (ptype == "1-st") {
+          p <- p + labs(title = paste(clevel * 100, "% ", "Confidence Interval for F(t)", sep = ""),
+                        x = "Probability", y = NULL)
+        }
+        gp=ggplotly(p, tooltip = c("text","label","label2","label3"))
+        dat.p()
+        gp
       })
 
       output$data.pred <- renderPrint({
         if (input$add > 0) {
-          isolate({
-            if (nrow(data2() > 0)) {
-              di <- ncol(input.data)
-              data.p <- merge(input.data[-1, ], data2()[1:5], by="NO")
-              data.p <- data.p[, !(colnames(data.p) %in% c("NO", "counter"))]
-              stargazer(data.p, summary = FALSE, type = "text")
-            }
-          })
+          if (nrow(data2() > 0)) {
+            di <- ncol(input.data)
+            data.p <- merge(input.data[-1, ], data2()[1:5], by="NO")
+            data.p <- data.p[, !(colnames(data.p) %in% c("NO", "counter"))]
+            stargazer(data.p, summary = FALSE, type = "text")
+          }
         }
       })
 
       output$summary <- renderPrint({
-        coef.c <- exp(model$coef)
-        ci.c <- exp(suppressMessages(confint(model, level = clevel)))
-        stargazer(model, coef = list(coef.c), ci.custom = list(ci.c), p.auto = F,
-                  type = "text", omit.stat = c("LL", "ser", "f"), ci = TRUE, ci.level = clevel,
-                  single.row = TRUE, title = paste("Cox model:", model$call[2], sep = " "))
+        if (m.summary == "raw"){
+          summary(model)
+        } else{
+          coef.c <- exp(model$coef)
+          ci.c <- exp(suppressMessages(confint(model, level = clevel)))
+          stargazer(model, coef = list(coef.c), ci.custom = list(ci.c), p.auto = F,
+                    type = "text", omit.stat = c("LL", "ser", "f"), ci = TRUE, ci.level = clevel,
+                    single.row = TRUE, title = paste("Cox model:", model$call[2], sep = " "))
+        }
       })
     }
   )

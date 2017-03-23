@@ -1,10 +1,11 @@
 importFrom("stats", "confint", "na.omit", "predict", "qnorm", "qt",
-             "quantile", "sd", "time", "update", "plogis")
+             "quantile", "sd", "time", "update", "plogis", "vcov")
 importFrom("utils", "tail")
 importFrom("compare", "compare")
 importFrom("survival", "survfit")
 importFrom("rms", "survest")
 importFrom("BBmisc", "is.error")
+importFrom("plotly", "ggplotly")
 import(ggplot2)
 import(shiny)
 import(stargazer)

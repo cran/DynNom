@@ -1,8 +1,6 @@
-if (getRversion() >= "2.15.1") utils::globalVariables(c("input.data", "old.d"))
 
-DNbuilder <- function(model, data,
-                  clevel = 0.95, covariate = c("slider", "numeric"),
-                  ptype = c("st", "1-st")) {
+DNbuilder <- function(model, data, clevel = 0.95, m.summary = c("raw", "formatted"),
+                      covariate = c("slider", "numeric"), ptype = c("st", "1-st")) {
 
   data <- data.frame(data)
 
@@ -60,17 +58,17 @@ DNbuilder <- function(model, data,
   }
 
   if (attr(model, "class")[1] == "lm") {
-    DNbuilder.lm(model, data, clevel, covariate)
+    DNbuilder.lm(model, data, clevel, m.summary, covariate)
   }
   if (attr(model, "class")[1] == "glm") {
-    DNbuilder.glm(model, data, clevel, covariate)
+    DNbuilder.glm(model, data, clevel, m.summary, covariate)
   }
   if (attr(model, "class")[1] == "coxph") {
     if (attr(model$terms, "dataClasses")[[1]] == "nmatrix.3")
       stop("Error in model syntax: start/stop notation not supported")
 
     if (attr(model$terms, "dataClasses")[[1]] == "nmatrix.2") {
-      DNbuilder.coxph(model, data, clevel, covariate, ptype)
+      DNbuilder.coxph(model, data, clevel, m.summary, covariate, ptype)
     }
   }
 }

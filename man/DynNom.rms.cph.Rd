@@ -7,9 +7,8 @@ Dynamic Nomograms for Cox Proportional Hazards Models from the \code{rms} packag
 \code{DynNom.cph} displays the results of a \code{cph} model object from \code{rms} package as a dynamic nomogram in an 'RStudio' panel or web browser.
 }
 \usage{
-DynNom.cph(model, data,
-             clevel = 0.95, covariate = c("slider", "numeric"),
-             ptype = c("st", "1-st"))
+DynNom.cph(model, data, clevel = 0.95, m.summary = c("raw", "formatted"),
+                   covariate = c("slider", "numeric"), ptype = c("st", "1-st"))
 }
 \arguments{
   \item{model}{
@@ -20,6 +19,9 @@ DynNom.cph(model, data,
 }
   \item{clevel}{
   confidence level required
+}
+  \item{m.summary}{
+  The option to choose the format of the model output in the 'Summary Model' tab. If "raw" (the default) is chosen the result of summary(model) will be display while if "formatted" is chosen the model summary using the stargazer package will be displayed.
 }
   \item{covariate}{
   The option to choose the type of covariate(s) input control widget for numeric values. If "slider" (the default) is chosen a shiny application with slider control widgets are used while if "numeric" is chosen numeric values input controls will be displayed.

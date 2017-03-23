@@ -7,8 +7,8 @@ Dynamic Nomograms for Logistic Regression Models from the \code{rms} package
 \code{DynNOm.lrm} displays the results of a \code{lrm} model object from the \code{rms} package as a dynamic nomogram in an 'RStudio' panel or web browser.
 }
 \usage{
-DynNom.lrm(model, data,
-           clevel = 0.95, covariate = c("slider", "numeric"))
+DynNom.lrm(model, data, clevel = 0.95, m.summary = c("raw", "formatted"),
+                       covariate = c("slider", "numeric"))
 }
 \arguments{
   \item{model}{
@@ -19,6 +19,9 @@ DynNom.lrm(model, data,
 }
   \item{clevel}{
   confidence level required
+}
+  \item{m.summary}{
+  The option to choose the format of the model output in the 'Summary Model' tab. If "raw" (the default) is chosen the result of summary(model) will be display while if "formatted" is chosen the model summary using the stargazer package will be displayed.
 }
   \item{covariate}{
   The option to choose the type of covariate(s) input control widget for numeric values. If "slider" (the default) is chosen a shiny application with slider control widgets are used while if "numeric" is chosen numeric values input controls will be displayed.
@@ -66,9 +69,9 @@ options(datadist = 'ddist')
 data = data.frame(y = y, blood.pressure = blood.pressure, sex = sex, age = age,
 cholesterol = cholesterol)
 model <- lrm(y ~ blood.pressure + sex * (age + rcs(cholesterol, 4)),
-             x = TRUE, y = TRUE)
+             x = TRUE, y = TRUE, m.summary = "formatted")
 
-DynNom.lrm(model, data)
+DynNom.lrm(model, data, m.summary = "formatted")
 }
 
 if (interactive()) {

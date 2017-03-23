@@ -7,8 +7,8 @@ Dynamic Nomograms for Linear Models
 \code{DynNom.lm} displays the results of an \code{lm} model object as a dynamic nomogram in an 'RStudio' panel or web browser.
 }
 \usage{
-DynNom.lm(model, data,
-          clevel = 0.95, covariate = c("slider", "numeric"))
+DynNom.lm(model, data, clevel = 0.95, m.summary = c("raw", "formatted"),
+                      covariate = c("slider", "numeric"))
 }
 \arguments{
   \item{model}{
@@ -19,6 +19,9 @@ DynNom.lm(model, data,
 }
   \item{clevel}{
   confidence level required
+}
+  \item{m.summary}{
+  The option to choose the format of the model output in the 'Summary Model' tab. If "raw" (the default) is chosen the result of summary(model) will be display while if "formatted" is chosen the model summary using the stargazer package will be displayed.
 }
   \item{covariate}{
   The option to choose the type of covariate(s) input control widget for numeric values. If "slider" (the default) is chosen a shiny application with slider control widgets are used while if "numeric" is chosen numeric values input controls will be displayed.

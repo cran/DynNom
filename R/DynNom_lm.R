@@ -1,7 +1,6 @@
-if (getRversion() >= "2.15.1") utils::globalVariables(c("counter", "Prediction", "input.data", "old.d"))
 
-DynNom.lm <- function(model, data,
-                      clevel = 0.95, covariate = c("slider", "numeric")) {
+DynNom.lm <- function(model, data, clevel = 0.95, m.summary = c("raw", "formatted"),
+                      covariate = c("slider", "numeric")) {
 
   data <- data.frame(data)
 
@@ -26,6 +25,7 @@ DynNom.lm <- function(model, data,
   }
 
   covariate <- match.arg(covariate)
+  m.summary <- match.arg(m.summary)
   input.data <- NULL
   old.d <- NULL
 
@@ -45,7 +45,7 @@ DynNom.lm <- function(model, data,
                                  actionButton("quit", "Quit")
       ),
       mainPanel(tabsetPanel(id = "tabs",
-                            tabPanel("Graphical Summary", plotOutput("plot")),
+                            tabPanel("Graphical Summary", plotlyOutput("plot")),
                             tabPanel("Numerical Summary", verbatimTextOutput("data.pred")),
                             tabPanel("Model Summary", verbatimTextOutput("summary"))
       )
@@ -59,8 +59,8 @@ DynNom.lm <- function(model, data,
           stopApp()
       })
 
-      limits0 <- c(mean(as.numeric(model$model[[1]])) - 3 * sd(model$model[[1]]),
-                   mean(as.numeric(model$model[[1]])) + 3 * sd(model$model[[1]]))
+      limits0 <- suppressWarnings(c(mean(as.numeric(model$model[[1]])) - 3 * sd(model$model[[1]]),
+                   mean(as.numeric(model$model[[1]])) + 3 * sd(model$model[[1]])))
       limits <- reactive({
         if (as.numeric(input$limits) == 1) {
           limits <- c(input$lxlim, input$uxlim)
@@ -121,16 +121,16 @@ DynNom.lm <- function(model, data,
             slide.bars <- list(lapply(1:nn, function(j) {
               sliderInput(paste("numeric", j, sep = ""),
                           names(attr(model$terms, "dataClasses")[as.numeric(i.numeric[j, 2])]),
-                          min = as.integer(min(na.omit(data[, as.numeric(i.numeric[j, 3])]))),
-                          max = as.integer(max(na.omit(data[, as.numeric(i.numeric[j, 3])]))) + 1,
-                          value = as.integer(mean(na.omit(data[, as.numeric(i.numeric[j, 3])]))))
+                          min = floor(min(na.omit(data[, as.numeric(i.numeric[j, 3])]))),
+                          max = ceiling(max(na.omit(data[, as.numeric(i.numeric[j, 3])]))),
+                          value = mean(na.omit(data[, as.numeric(i.numeric[j, 3])])))
             }))
           }
           if (covariate == "numeric") {
             slide.bars <- list(lapply(1:nn, function(j) {
               numericInput(paste("numeric", j, sep = ""),
                            names(attr(model$terms, "dataClasses")[as.numeric(i.numeric[j, 2])]),
-                           value = as.integer(mean(na.omit(data[, as.numeric(i.numeric[j, 3])]))))
+                           value = round(mean(na.omit(data[, as.numeric(i.numeric[j, 3])]))))
             }))
           }
           do.call(tagList, slide.bars)
@@ -139,10 +139,11 @@ DynNom.lm <- function(model, data,
 
       a <- 0
       new.d <- reactive({
+        input$add
         if (nf > 0) {
           input.f <- vector("list", nf)
           for (i in 1:nf) {
-            input.f[[i]] <- local({
+            input.f[[i]] <- isolate({
               input[[paste("factor", i, sep = "")]]
             })
             names(input.f)[i] <- i.factor[i, 1]
@@ -151,7 +152,7 @@ DynNom.lm <- function(model, data,
         if (nn > 0) {
           input.n <- vector("list", nn)
           for (i in 1:nn) {
-            input.n[[i]] <- local({
+            input.n[[i]] <- isolate({
               input[[paste("numeric", i, sep = "")]]
             })
             names(input.n)[i] <- i.numeric[i, 1]
@@ -174,7 +175,9 @@ DynNom.lm <- function(model, data,
         if (a > 0) {
           wher <- match(names(out), names(input.data))
           out <- out[wher]
-          input.data <<- rbind(input.data, out)
+          if (isTRUE(compare(old.d, out)) == FALSE) {
+            input.data <<- rbind(input.data, out)
+          }
         }
         a <<- a + 1
         out
@@ -207,56 +210,59 @@ DynNom.lm <- function(model, data,
         OUT
       })
 
-      output$plot <- renderPlot({
+      output$plot <- renderPlotly({
         if (input$add == 0)
-         return(NULL)
-        OUT <- isolate({
-          if (is.null(new.d()))
-            return(NULL)
-          if (is.na(input$lxlim) | is.na(input$uxlim)) {
-            lim <- limits0
-          } else {
-            lim <- limits()
-          }
-          yli <- c(0 - 0.5, 10 + 0.5)
-          if (dim(input.data)[1] > 11)
-            yli <- c(dim(input.data)[1] - 11.5, dim(input.data)[1] - 0.5)
-          p <- ggplot(data = data2(), aes(x = Prediction, y = 0:(sum(counter) - 1)))
-          p <- p + geom_point(size = 4, colour = data2()$count, shape = 15)
-          p <- p + ylim(yli[1], yli[2]) + coord_cartesian(xlim = lim)
-          p <- p + geom_errorbarh(xmax = data2()$Upper.bound, xmin = data2()$Lower.bound,
-                                  size = 1.45, height = 0.4, colour = data2()$count)
-          p <- p + labs(title = paste(clevel * 100, "% ", "Confidence Interval for Response", sep = ""),
-                        x = "Response", y = NULL)
-          p <- p + theme_bw() + theme(axis.text.y = element_blank(), text = element_text(face = "bold", size = 14))
-          print(p)
-        })
-        OUT
+          return(NULL)
+        if (is.null(new.d()))
+          return(NULL)
+        if (is.na(input$lxlim) | is.na(input$uxlim)) {
+          lim <- limits0
+        } else {
+          lim <- limits()
+        }
+        PredictNO <- 0:(sum(data2()$counter) - 1)
+        in.d <- data.frame(input.data[-1,])
+        xx=matrix(paste(names(in.d), ": ",t(in.d), sep=""), ncol=dim(in.d)[1])
+        Covariates=apply(xx,2,paste,collapse="<br />")
+        yli <- c(0 - 0.5, 10 + 0.5)
+        if (dim(input.data)[1] > 11)
+          yli <- c(dim(input.data)[1] - 11.5, dim(input.data)[1] - 0.5)
+        p <- ggplot(data = data2(), aes(x = Prediction, y = PredictNO, text = Covariates,
+                                        label = Prediction, label2 = Lower.bound, label3=Upper.bound)) +
+          geom_point(size = 2, colour = data2()$count, shape = 15) +
+          ylim(yli[1], yli[2]) + coord_cartesian(xlim = lim) +
+          geom_errorbarh(xmax = data2()$Upper.bound, xmin = data2()$Lower.bound,
+                         size = 1.45, height = 0.4, colour = data2()$count) +
+          labs(title = paste(clevel * 100, "% ", "Confidence Interval for Response", sep = ""),
+               x = "Response Variable", y = NULL) + theme_bw() +
+          theme(axis.text.y = element_blank(), text = element_text(face = "bold", size = 10))
+        gp=ggplotly(p, tooltip = c("text","label","label2","label3"))
+        gp
       })
 
       output$data.pred <- renderPrint({
-        observe({data2()})
         if (input$add > 0) {
-          dd.p <- isolate({
-            if (nrow(data2() > 0)) {
-              if (dim(input.data)[2] == 1) {
-                in.d <- data.frame(input.data[-1, ])
-                names(in.d) <- names(attr(model$terms, "dataClasses"))[2]
-                data.p <- cbind(in.d, data2()[1:3])
-              }
-              if (dim(input.data)[2] > 1) {
-                data.p <- cbind(input.data[-1, ], data2()[1:3])
-              }
-              data.p
+          if (nrow(data2() > 0)) {
+            if (dim(input.data)[2] == 1) {
+              in.d <- data.frame(input.data[-1, ])
+              names(in.d) <- names(attr(model$terms, "dataClasses"))[2]
+              data.p <- cbind(in.d, data2()[1:3])
             }
-          })
-          stargazer(dd.p, summary = FALSE, type = "text")
+            if (dim(input.data)[2] > 1) {
+              data.p <- cbind(input.data[-1, ], data2()[1:3])
+            }
+          }
+          stargazer(data.p, summary = FALSE, type = "text")
         }
       })
 
       output$summary <- renderPrint({
-        stargazer(model, type = "text", omit.stat = c("LL", "ser", "f"), ci = TRUE, ci.level = clevel,
-                  single.row = TRUE, title = paste("Linear Regression:", model$call[2], sep = " "))
+        if (m.summary == "raw"){
+          summary(model)
+        } else{
+          stargazer(model, type = "text", omit.stat = c("LL", "ser", "f"), ci = TRUE, ci.level = clevel,
+                    single.row = TRUE, title = paste("Linear Regression:", model$call[2], sep = " "))
+        }
       })
     }
   )
