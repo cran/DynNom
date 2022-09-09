@@ -1,4 +1,4 @@
-8d89d6918aa27dd141cf16acbd068a2f *DESCRIPTION
+43c9a625880a104484ab957b3fb23315 *DESCRIPTION
 72a1dea495fdf0f80ddc5e566da0fc8f *NAMESPACE
 47b8221ad5a9ea14d53f2e612bc839a9 *R/DNbuilder-core.R
 9700da25881b0a8122ca28b1a9e30863 *R/DNbuilder-surv.R
@@ -9,8 +9,8 @@ b82b302c56ead6a1427566cf0174b63b *R/DynNom.R
 cb871ed6bb96b86145f9ade5ea794737 *R/getclass-DN.R
 031674f92d2495eda48cc9e7fd0abb5f *R/getdata-DN.R
 770859b560ffff567b1baba115a11a6f *R/getpred-DN.R
-d5bbaadda8c166bc581c72a746ebaf8e *man/DNbuilder.Rd
-33c4c9c78f71ba3d51c06b3a86f74b89 *man/DynNom.Rd
+0f613428cd4c453f57385f071eabfe4f *man/DNbuilder.Rd
+e98724bc76a15e0ff1bde7462808071f *man/DynNom.Rd
 fdb64b6fa3e8b437f4a79aa510029cf1 *man/getclass.DN.Rd
 7068641cf44e067b37d48cdb4f4df915 *man/getdata.DN.Rd
 aed36ccc14df5d964b218dbc70dcdc9d *man/getpred.DN.Rd

@@ -67,9 +67,9 @@ The individual predictions with a relative confidence interval are calculated us
 }
 \references{
 Banks, J. 2006. Nomograms. Encyclopedia of Statistical Sciences. 8. \cr
-Easy web applications in R. \url{http://shiny.rstudio.com} \cr
+Easy web applications in R. \url{https://shiny.rstudio.com/} \cr
 Frank E Harrell Jr (2017). rms: Regression Modeling Strategies. R package version 4.5-0.
-\url{https://CRAN.R-project.org/package=rms}
+\url{https://CRAN.R-project.org/package=rms/}
 }
 \author{
 Amirhossein Jalali, Davood Roshan, Alberto Alvarez-Iglesias, John Newell

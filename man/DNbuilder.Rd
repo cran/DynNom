@@ -6,7 +6,7 @@
   Publishing a dynamic nomogram
 }
 \description{
-  \code{DNbuilder} is a generic function which builds required scripts to publish a dynamic nomogram on a web server such as the \url{http://shinyapps.io}. This application can then access through a URL and be used independent of R. \code{DNbuilder} supports a large number of model objects from a variety of packages.
+  \code{DNbuilder} is a generic function which builds required scripts to publish a dynamic nomogram on a web server such as the \url{https://www.shinyapps.io/}. This application can then access through a URL and be used independent of R. \code{DNbuilder} supports a large number of model objects from a variety of packages.
 }
 \usage{
 DNbuilder(model, data = NULL, clevel = 0.95, m.summary = c("raw", "formatted"),
@@ -62,13 +62,13 @@ DNbuilder.surv(model, data, clevel, m.summary, covariate,
 }
 }
 \value{
-  A new folder called 'DynNomapp' will be created in the current working directory which contains all the required scripts to deploy this dynamic nomogram on a host server such as the \url{http://shinyapps.io}. This folder includes \code{ui.R}, \code{server.R}, \code{global.R} and \code{data.RData} which needs to publish the app. A user guide text file (\code{README.txt}) will be also added to explain how to deploy the app using these files.
+  A new folder called 'DynNomapp' will be created in the current working directory which contains all the required scripts to deploy this dynamic nomogram on a host server such as the \url{https://www.shinyapps.io/}. This folder includes \code{ui.R}, \code{server.R}, \code{global.R} and \code{data.RData} which needs to publish the app. A user guide text file (\code{README.txt}) will be also added to explain how to deploy the app using these files.
 }
 \references{
 Banks, J. 2006. Nomograms. Encyclopedia of Statistical Sciences. 8. \cr
-Easy web applications in R. \url{http://shiny.rstudio.com} \cr
+Easy web applications in R. \url{https://shiny.rstudio.com/} \cr
 Frank E Harrell Jr (2017). rms: Regression Modeling Strategies. R package version 4.5-0.
-\url{https://CRAN.R-project.org/package=rms}
+\url{https://CRAN.R-project.org/package=rms/}
 }
 \author{
 Amirhossein Jalali, Davood Roshan, Alberto Alvarez-Iglesias, John Newell
