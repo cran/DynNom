@@ -19,8 +19,8 @@ DNbuilder.core <- function(model, data, clevel, m.summary, covariate, DNtitle, D
 
   allvars <- all.vars(model$terms)
   if (mclass %in% c("ols", "lrm", "Glm")){
-    terms <- model$Design$assume[model$Design$assume!="interaction"]
-    names(terms) = model$Design$name[model$Design$assume!="interaction"]
+    terms <- c("-", model$Design$assume[model$Design$assume!="interaction"])
+    names(terms) = allvars
     if (mclass %in% c("Glm")){
       terms <- c(attr(attr(model$model, "terms"), "dataClasses")[1], terms)
     } else{
@@ -45,28 +45,30 @@ DNbuilder.core <- function(model, data, clevel, m.summary, covariate, DNtitle, D
 
   resp <- terms[1]
   names(resp) <- allvars[1]
-  if ("(weights)" %in% names(terms)){
-    preds <- as.list(terms[-c(1, length(terms))])
-  } else{
-    preds <- as.list(terms[-1])
-  }
-  names(preds) <- allvars[-1]
 
-  for (i in 1:length(preds)){
-    if (preds[[i]] == "numeric"){
-      i.dat <- which(names(preds[i]) == names(data))
+  if ("(weights)" %in% names(terms)){
+    preds0 <- as.list(terms[-c(1, length(terms))])
+  } else{
+    preds0 <- as.list(terms[-1])
+  }
+  names(preds0) <- allvars[-1]
+
+  preds <- list()
+  for (i in 1:length(preds0)){
+    if (preds0[[i]] == "numeric"){
+      i.dat <- which(names(preds0[i]) == names(data))
       preds[[i]] <- list(v.min = floor(min(na.omit(data[, as.numeric(i.dat)]))),
                          v.max = ceiling(max(na.omit(data[, as.numeric(i.dat)]))),
                          v.mean = zapsmall(mean(data[, as.numeric(i.dat)], na.rm=T), digits = 4)
       )
-      next
     }
-    if (preds[[i]] == "factor"){
-      i.dat <- which(names(preds[i]) == names(data))
+
+    if (preds0[[i]] == "factor"){
+      i.dat <- which(names(preds0[i]) == names(data))
       if (mclass %in% c("ols", "Glm", "lrm", "cph")){
-        preds[[i]] <- list(v.levels = model$Design$parms[[which(names(preds[i]) == names(model$Design$parms))]])
+        preds[[i]] <- list(v.levels = model$Design$parms[[which(names(preds0[i]) == names(model$Design$parms))]])
       } else{
-        preds[[i]] <- list(v.levels = model$xlevels[[which(names(preds[i]) == names(model$xlevels))]])
+        preds[[i]] <- list(v.levels = model$xlevels[[which(names(preds0[i]) == names(model$xlevels))]])
       }
     }
   }
@@ -93,7 +95,7 @@ DNbuilder.core <- function(model, data, clevel, m.summary, covariate, DNtitle, D
     limits0 <- DNlimits
   }
 
-  neededVar <- c(names(resp), names(preds))
+  neededVar <- c(names(resp), names(preds0))
   data <- data[, neededVar]
   input.data <- data[0, ]
   model <- update(model, data=data)
@@ -105,7 +107,7 @@ DNbuilder.core <- function(model, data, clevel, m.summary, covariate, DNtitle, D
   setwd(app.dir)
 
   message(paste("Export dataset: ", app.dir, "/dataset.RData", sep=""))
-  save(data, model, preds, resp, mlinkF, getpred.DN, getclass.DN,
+  save(data, model, preds, preds0, resp, mlinkF, getpred.DN, getclass.DN,
        DNtitle, DNxlab, DNylab, DNlimits, limits0, terms, input.data, file = "data.RData")
 
   message(paste("Export functions: ", app.dir, "/functions.R", sep=""))
@@ -186,7 +188,6 @@ library(shiny)
 library(plotly)
 library(stargazer)
 library(compare)
-library(prediction)
 ", library.bl ,"
 
 #######################################################
@@ -205,9 +206,10 @@ m.summary <- '",m.summary,"'
 covariate <- '", covariate,"'
 clevel <- ", clevel,"
 
-### Please cite the package if used in publication. Use:
-# Amirhossein Jalali, Davood Roshan, Alberto Alvarez-Iglesias and John Newell (2019). DynNom: Visualising statistical models using dynamic nomograms.
-# R package version 5.0. https://CRAN.R-project.org/package=DynNom
+### Please cite the package in publications if it is used.
+# Read more on:
+# Jalali, A., Alvarez-Iglesias, A., Roshan, D., & Newell, J. (2019). Visualising statistical models using dynamic nomograms. PLoS one, 14(11), e0225253.
+
 ", sep="")
 
   #### ui.R generator
@@ -239,15 +241,15 @@ output$manySliders <- renderUI({
   slide.bars <- list()
                for (j in 1:length(preds)){
                if (terms[j+1] == "factor"){
-               slide.bars[[j]] <- list(selectInput(paste("pred", j, sep = ""), names(preds)[j], preds[[j]]$v.levels, multiple = FALSE))
+               slide.bars[[j]] <- list(selectInput(paste("pred", j, sep = ""), names(preds0)[j], preds[[j]]$v.levels, multiple = FALSE))
                }
                if (terms[j+1] == "numeric"){
                if (covariate == "slider") {
-               slide.bars[[j]] <- list(sliderInput(paste("pred", j, sep = ""), names(preds)[j],
+               slide.bars[[j]] <- list(sliderInput(paste("pred", j, sep = ""), names(preds0)[j],
                min = preds[[j]]$v.min, max = preds[[j]]$v.max, value = preds[[j]]$v.mean))
                }
                if (covariate == "numeric") {
-               slide.bars[[j]] <- list(numericInput(paste("pred", j, sep = ""), names(preds)[j], value = zapsmall(preds[[j]]$v.mean, digits = 4)))
+               slide.bars[[j]] <- list(numericInput(paste("pred", j, sep = ""), names(preds0)[j], value = zapsmall(preds[[j]]$v.mean, digits = 4)))
                }}}
                do.call(tagList, slide.bars)
 })
@@ -270,7 +272,7 @@ new.d <- reactive({
                input.v[[i]] <- isolate({
                input[[paste("pred", i, sep = "")]]
                })
-               names(input.v)[i] <- names(preds)[i]
+               names(input.v)[i] <- names(preds0)[i]
                }
                out <- data.frame(lapply(input.v, cbind))
                if (a == 0) {
@@ -292,7 +294,7 @@ data2 <- reactive({
                if (input$add > 0) {
                if (!isTRUE(compare(old.d, new.d()))) {
                isolate({
-               mpred <- getpred.DN(model, new.d(), set.rms=T)$pred
+               mpred <- suppressWarnings({ getpred.DN(model, new.d())$pred })
                se.pred <- getpred.DN(model, new.d(), set.rms=T)$SEpred
                if (is.na(se.pred)) {
                lwb <- "No standard errors"

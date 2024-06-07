@@ -5,7 +5,7 @@ getclass.DN <- function(model){
   if (mclass == "coxph.null")
     stop("Error in model syntax: the model is null")
 
-  if (!mclass %in% c("lm", "glm", "coxph", "ols", "lrm", "Glm", "cph", "gam", "Gam", "glmnet"))
+  if (!mclass %in% c("lm", "glm", "coxph", "ols", "lrm", "Glm", "cph", "gam", "glmnet"))
     stop("Unrecognized model object type.")
 
   if (mclass %in% c("elnet", "lognet", "multnet", "fishnet", "coxnet", "mrelnet")){

@@ -11,7 +11,7 @@ getclass.DN(model)
 }
 \arguments{
   \item{model}{
-  an \code{lm}, \code{glm}, \code{coxph}, \code{ols}, \code{Glm}, \code{lrm}, \code{cph}, \code{mgcv::gam} or \code{gam::gam} model objects.
+  an \code{lm}, \code{glm}, \code{coxph}, \code{ols}, \code{Glm}, \code{lrm}, \code{cph} or \code{mgcv::gam} model objects.
 }
 }
 \value{

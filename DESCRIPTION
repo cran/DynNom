@@ -1,16 +1,15 @@
 Package: DynNom
 Type: Package
 Title: Visualising Statistical Models using Dynamic Nomograms
-Version: 5.0.2
+Version: 5.1
 Author: Amirhossein Jalali, Davood Roshan, Alberto Alvarez-Iglesias, John Newell
 Maintainer: Amirhossein Jalali <amir.jalali@ul.ie>
-Description: Demonstrate the results of a statistical model object as a dynamic nomogram in an RStudio panel or web browser. The package provides two generics functions: DynNom, which display statistical model objects as a dynamic nomogram; DNbuilder, which builds required scripts to publish a dynamic nomogram on a web server such as the <https://www.shinyapps.io/>. Current version of 'DynNom' supports stats::lm, stats::glm, survival::coxph, rms::ols, rms::Glm, rms::lrm, rms::cph, mgcv::gam and gam::gam model objects.
+Description: Demonstrate the results of a statistical model object as a dynamic nomogram in an RStudio panel or web browser. The package provides two generics functions: DynNom, which display statistical model objects as a dynamic nomogram; DNbuilder, which builds required scripts to publish a dynamic nomogram on a web server such as the <https://www.shinyapps.io/>. Current version of 'DynNom' supports stats::lm, stats::glm, survival::coxph, rms::ols, rms::Glm, rms::lrm, rms::cph, and mgcv::gam model objects.
 License: GPL-2
-Depends: magrittr
-Imports: survival (>= 2.38-3), shiny, ggplot2 (> 2.1.0), plotly,
-        stargazer, prediction, rms, dplyr, compare, BBmisc
-Suggests: gam, mgcv
+Imports: magrittr, shiny, ggplot2 (> 2.1.0), plotly, stargazer, dplyr,
+        compare, BBmisc, broom, rms, survival
+Suggests: mgcv
 NeedsCompilation: no
-Packaged: 2022-08-29 09:21:32 UTC; amirjalali
+Packaged: 2024-06-07 11:10:15 UTC; amirjalali
 Repository: CRAN
-Date/Publication: 2022-09-09 10:53:07 UTC
+Date/Publication: 2024-06-07 12:20:21 UTC

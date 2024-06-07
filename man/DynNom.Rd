@@ -21,7 +21,7 @@ DynNom.surv(model, data, clevel, m.summary, covariate,
 }
 \arguments{
   \item{model}{
-  an \code{lm}, \code{glm}, \code{coxph}, \code{ols}, \code{Glm}, \code{lrm}, \code{cph}, \code{mgcv::gam} or \code{gam::gam} model objects.
+  an \code{lm}, \code{glm}, \code{coxph}, \code{ols}, \code{Glm}, \code{lrm}, \code{cph} or \code{mgcv::gam} model object.
 }
   \item{data}{
   a dataframe of the accompanying dataset for the model (if required).
@@ -67,7 +67,7 @@ The individual predictions with a relative confidence interval are calculated us
 }
 \references{
 Banks, J. 2006. Nomograms. Encyclopedia of Statistical Sciences. 8. \cr
-Easy web applications in R. \url{https://shiny.rstudio.com/} \cr
+Easy web applications in R. \url{https://www.rstudio.com/products/shiny/} \cr
 Frank E Harrell Jr (2017). rms: Regression Modeling Strategies. R package version 4.5-0.
 \url{https://CRAN.R-project.org/package=rms/}
 }
@@ -77,7 +77,8 @@ Amirhossein Jalali, Davood Roshan, Alberto Alvarez-Iglesias, John Newell
 Maintainer: Amirhossein Jalali <a.jalali2@nuigalway.ie>
 }
 \section{Please cite as:}{
-Jalali, A., Roshan, D., Alvarez-Iglesias, A., Newell, J. (2019). Visualising statistical models using dynamic nomograms. R package version 5.0.
+Jalali A, Alvarez-Iglesias A, Roshan D, Newell J (2019) Visualising statistical models using dynamic nomograms. PLOS ONE 14(11): e0225253.
+https://doi.org/10.1371/journal.pone.0225253
 }
 \seealso{
 \code{\link{DNbuilder}}, \code{\link{getpred.DN}}
@@ -127,9 +128,6 @@ DynNom(fit3, DNxlab = "Survival probability",
 # Generalized additive models
 mgcv::gam(Fertility ~ s(Agriculture) + Education + s(Catholic), data=swiss) \%>\%
   DynNom(DNlimits = c(0, 110), m.summary="formatted")
-
-fit4 <- gam::gam(Fertility ~ Education + Catholic + s(Agriculture), fit=FALSE, data=swiss)
-DynNom(fit4)
 }
 if (interactive()) {
   data(rock)

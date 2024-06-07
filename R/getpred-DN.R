@@ -3,7 +3,7 @@ getpred.DN <- function(model, newd, set.rms=F){
   inrange <- T
   mclass <- getclass.DN(model)$model.class
 
-  if (!mclass %in% c("lm", "glm", "coxph", "ols", "lrm", "Glm", "cph", "gam", "Gam", "glmnet"))
+  if (!mclass %in% c("lm", "glm", "coxph", "ols", "lrm", "Glm", "cph", "gam", "glmnet"))
     stop("Unrecognized model object type.")
 
   if (mclass %in% c("ols", "lrm", "Glm", "cph")){
@@ -19,27 +19,15 @@ getpred.DN <- function(model, newd, set.rms=F){
     mpred <- m.pred$linear.predictors
     se.pred <- m.pred$se.fit[[1]]
   }
-  if (mclass %in% c("glm", "gam")){
-    m.pred <- prediction(model, data = newd, type = "link", calculate_se = TRUE)
-    mpred <- m.pred$fit
-    se.pred <- m.pred$se.fitted
-  }
-  if (mclass %in% c("lm", "Gam")){
-    m.pred <- prediction(model, data = newd, calculate_se = TRUE)
-    mpred <- m.pred$fit
-    se.pred <- m.pred$se.fitted
+
+  if (mclass %in% c("lm", "glm", "gam")){
+    mpred <- broom::augment(x=model, newdata = newd, se_fit=T)$.fitted
+    se.pred <- broom::augment(x=model, newdata = newd, se_fit=T)$.se.fit
   }
 
   if (mclass %in% c("coxph")){
-    if(!any(class(try(prediction(model, data = newd, type = "expected", calculate_se = TRUE), silent = TRUE)) == "try-error")){
-      m.pred <- prediction(model, data = newd, type = "expected", calculate_se = TRUE)
-      mpred <- m.pred$fit
-      se.pred <- m.pred$se.fit
-    } else{
-      inrange = F
-      mpred <- 0
-      se.pred <- 0
-    }
+    mpred <- broom::augment(x=model, newdata = newd, se_fit=T, type.predict = "expected")$.fitted
+    se.pred <- broom::augment(x=model, newdata = newd, se_fit=T, type.predict = "expected")$.se.fit
   }
 
   if (mclass %in% c("cph")){

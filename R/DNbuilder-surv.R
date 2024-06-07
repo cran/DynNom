@@ -48,31 +48,30 @@ DNbuilder.surv <- function(model, data, clevel, m.summary, covariate,
   mterms[mterms %in% c("numeric", "asis", "polynomial", "integer", "double", "matrx") |
            grepl("nmatrix", mterms, fixed = T) | grepl("spline", mterms, fixed = T)] = "numeric"
   mterms[mterms %in% c("factor", "ordered", "logical", "category", "scored", "strata")] = "factor"
-  preds <- as.list(mterms)
+  preds0 <- as.list(mterms)
 
   tim <- all.vars(model$terms)[1:2]
   ttim <- list(v.min = floor(min(na.omit(data[tim[1]]))),
                v.max = ceiling(max(na.omit(data[tim[1]]))),
                v.mean = zapsmall(median(data[tim[1]][,1], na.rm=T), digits = 4))
 
-  for (i in 1:length(preds)){
-    if (preds[[i]]  == "numeric"){
-      i.dat <- which(names(preds[i]) == names(data))
-      preds[[i]] <- list(dataClasses = preds[[i]],
+  preds <- preds0
+  for (i in 1:length(preds0)){
+    if (preds0[[i]]  == "numeric"){
+      i.dat <- which(names(preds0[i]) == names(data))
+      preds[[i]] <- list(dataClasses = preds0[[i]],
                          v.min = floor(min(na.omit(data[, as.numeric(i.dat)]))),
                          v.max = ceiling(max(na.omit(data[, as.numeric(i.dat)]))),
                          v.mean = mean(data[, as.numeric(i.dat)], na.rm=T)
       )
-      next
     }
-    if (preds[[i]]  == "factor"){
-      i.dat <- which(names(preds[i]) == names(data))
+    if (preds0[[i]]  == "factor"){
+      i.dat <- which(names(preds0[i]) == names(data))
       if (mclass %in% c("coxph")){
-        i.ifstrat <- grepl("strata(", names(attr(model$terms,"dataClasses"))[i+1], fixed=TRUE)
-        if (grepl("strata(", names(attr(model$terms,"dataClasses"))[i+1], fixed=TRUE)) {
-          preds[[i]] <- list(dataClasses = preds[[i]], IFstrata = T, v.levels = model$xlevels[[which(grepl(names(preds[i]), names(model$xlevels), fixed=TRUE))]])
+        if (startsWith(names(attr(model$terms, "dataClasses")[-1]), "strata")[i]){
+          preds[[i]] <- list(dataClasses = preds0[[i]], IFstrata = T, v.levels = model$xlevels[[which(grepl(names(preds0[i]), names(model$xlevels), fixed=TRUE))]])
         } else{
-          preds[[i]] <- list(dataClasses = preds[[i]], IFstrata = F, v.levels = model$xlevels[[which(names(preds[i]) == names(model$xlevels))]])
+          preds[[i]] <- list(dataClasses = preds0[[i]], IFstrata = F, v.levels = model$xlevels[[which(names(preds0[i]) == names(model$xlevels))]])
         }
       }
       if (mclass %in% c("cph")){
@@ -101,7 +100,7 @@ DNbuilder.surv <- function(model, data, clevel, m.summary, covariate,
   setwd(app.dir)
 
   message(paste("Export dataset: ", app.dir, "/dataset.RData", sep=""))
-  save(data, model, preds, mlinkF, getpred.DN, getclass.DN, ttim, tim, ptype, n.strata, coll, dim.terms, strata.l,
+  save(data, model, preds, preds0, mlinkF, getpred.DN, getclass.DN, ttim, tim, ptype, n.strata, coll, dim.terms, strata.l,
        DNtitle, DNxlab, DNylab, KMtitle, KMxlab, KMylab, terms, input.data, file = "data.RData")
 
   message(paste("Export functions: ", app.dir, "/functions.R", sep=""))
@@ -175,7 +174,6 @@ library(shiny)
 library(plotly)
 library(stargazer)
 library(compare)
-library(prediction)
 ", library.bl ,"
 
 #######################################################
@@ -195,8 +193,7 @@ covariate <- '", covariate,"'
 clevel <- ", clevel,"
 
 ### Please cite the package if used in publication. Use:
-# Amirhossein Jalali, Davood Roshan, Alberto Alvarez-Iglesias and John Newell (2019). DynNom: Visualising statistical models using dynamic nomograms.
-# R package version 5.0. https://CRAN.R-project.org/package=DynNom
+# Jalali A, Alvarez-Iglesias A, Roshan D, Newell J (2019) Visualising statistical models using dynamic nomograms. PLOS ONE 14(11): e0225253. https://doi.org/10.1371/journal.pone.0225253
 ", sep="")
 
   #### ui.R generator
@@ -333,7 +330,7 @@ s.fr <- NULL
 old.d2 <- NULL
 b <- 1
 dat.p <- reactive({
-               if (isTRUE(compare(old.d2, new.d())) == FALSE) {
+               if (!isTRUE(compare(old.d2, new.d()))) {
                ', stratlvl.bl,'
                try.survfit <- !any(class(try(survfit(model, newdata = new.d()), silent = TRUE)) == "try-error")
                if (try.survfit){
@@ -359,7 +356,10 @@ dat.p <- reactive({
                ', nam.bl,'
                }}}}
                if (try.survfit){
-               sub.fit1 <- subset(as.data.frame(summary(fit1)[c("time", "n.risk", "strata", "surv")]), strata == nam)
+               survfit_df <- as.data.frame(summary(fit1)[c("time", "n.risk", "strata", "surv")])
+               survfit_df$strata <- as.factor(survfit_df$strata)
+               levels(survfit_df$strata) <-  nam
+               sub.fit1 <- survfit_df
                } else{
                sub.fit1 <- data.frame(time=NA, n.risk=NA, strata=NA, surv=NA, event=NA, part=NA)[0,]
                }

@@ -1,7 +1,5 @@
 
-utils::globalVariables(c("counter", "Prediction", "input.data", "old.d", "ggplotly",
-                         "surv", "n.risk", "strata", "strat", "part", "event",
-                         "plotlyOutput", "renderPlotly","Lower.bound", "Upper.bound"))
+utils::globalVariables(c("surv", "n.risk", "part", "event"))
 
 DynNom.surv <- function(model, data, clevel, m.summary, covariate,
                         ptype, DNtitle, DNxlab, DNylab, KMtitle, KMxlab, KMylab) {
@@ -52,32 +50,31 @@ DynNom.surv <- function(model, data, clevel, m.summary, covariate,
   mterms[mterms %in% c("numeric", "asis", "polynomial", "integer", "double", "matrx") |
            grepl("nmatrix", mterms, fixed = T) | grepl("spline", mterms, fixed = T)] = "numeric"
   mterms[mterms %in% c("factor", "ordered", "logical", "category", "scored", "strata")] = "factor"
-  preds <- as.list(mterms)
+  preds0 <- as.list(mterms)
 
   tim <- all.vars(model$terms)[1:2]
   ttim <- list(v.min = floor(min(na.omit(data[tim[1]]))),
                v.max = ceiling(max(na.omit(data[tim[1]]))),
                v.mean = zapsmall(median(data[tim[1]][,1], na.rm=T), digits = 4))
 
-
-  for (i in 1:length(preds)){
-    if (preds[[i]]  == "numeric"){
-      i.dat <- which(names(preds[i]) == names(data))
-      preds[[i]] <- list(dataClasses = preds[[i]],
+  preds <- preds0
+  for (i in 1:length(preds0)){
+    if (preds0[[i]]  == "numeric"){
+      i.dat <- which(names(preds0[i]) == names(data))
+      preds[[i]] <- list(dataClasses = preds0[[i]],
                          v.min = floor(min(na.omit(data[, as.numeric(i.dat)]))),
                          v.max = ceiling(max(na.omit(data[, as.numeric(i.dat)]))),
                          v.mean = mean(data[, as.numeric(i.dat)], na.rm=T)
       )
-      next
     }
-    if (preds[[i]]  == "factor"){
-      i.dat <- which(names(preds[i]) == names(data))
+    if (preds0[[i]]  == "factor"){
+      i.dat <- which(names(preds0[i]) == names(data))
       if (mclass %in% c("coxph")){
-        i.ifstrat <- grepl("strata(", names(attr(model$terms,"dataClasses"))[i+1], fixed=TRUE)
-        if (grepl("strata(", names(attr(model$terms,"dataClasses"))[i+1], fixed=TRUE)) {
-          preds[[i]] <- list(dataClasses = preds[[i]], IFstrata = T, v.levels = model$xlevels[[which(grepl(names(preds[i]), names(model$xlevels), fixed=TRUE))]])
+        if (startsWith(names(attr(model$terms, "dataClasses")[-1]), "strata")[i]) {
+          preds[[i]] <- list(dataClasses = preds0[[i]], IFstrata = T, v.levels = model$xlevels[[which(grepl(names(preds0[i]), names(model$xlevels), fixed=TRUE))]])
+
         } else{
-          preds[[i]] <- list(dataClasses = preds[[i]], IFstrata = F, v.levels = model$xlevels[[which(names(preds[i]) == names(model$xlevels))]])
+          preds[[i]] <- list(dataClasses = preds0[[i]], IFstrata = F, v.levels = model$xlevels[[which(names(preds0[i]) == names(model$xlevels))]])
         }
       }
       if (mclass %in% c("cph")){
@@ -94,6 +91,7 @@ DynNom.surv <- function(model, data, clevel, m.summary, covariate,
   }
   input.data <- data.frame(data.frame(tim1=0)[0,], input.data)
   names(input.data)[1] <- tim[1]
+
 
   runApp(list(
 
@@ -236,7 +234,7 @@ DynNom.surv <- function(model, data, clevel, m.summary, covariate,
       old.d2 <- NULL
       b <- 1
       dat.p <- reactive({
-        if (isTRUE(compare(old.d2, new.d())) == FALSE) {
+        if (!isTRUE(compare(old.d2, new.d()))) {
           if (mclass == "cph"){
             if (length(levels(model$strata)) != length(levels(attr(predict(model, new.d(), type='x', expand.na=FALSE), 'strata')))){
               levels(model$strata) <- levels(attr(predict(model, new.d(), type='x', expand.na=FALSE), 'strata'))
@@ -283,7 +281,10 @@ DynNom.surv <- function(model, data, clevel, m.summary, covariate,
             }
 
             if (try.survfit){
-              sub.fit1 <- subset(as.data.frame(summary(fit1)[c("time", "n.risk", "strata", "surv")]), strata == nam)
+              survfit_df <- as.data.frame(summary(fit1)[c("time", "n.risk", "strata", "surv")])
+              survfit_df$strata <- as.factor(survfit_df$strata)
+              levels(survfit_df$strata) <-  nam
+              sub.fit1 <- survfit_df
             } else{
               sub.fit1 <- data.frame(time=NA, n.risk=NA, strata=NA, surv=NA, event=NA, part=NA)[0,]
             }
@@ -304,7 +305,7 @@ DynNom.surv <- function(model, data, clevel, m.summary, covariate,
           old.d2 <<- new.d()
           b <<- b + 1
         }
-        s.fr
+       s.fr
       })
 
       dat.f <- reactive({

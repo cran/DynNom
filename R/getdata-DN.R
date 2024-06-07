@@ -1,8 +1,46 @@
 
-utils::globalVariables(c("newcat", "."))
+#utils::globalVariables(c("newcat", ".", "as_tibble", "terms", "get_all_vars", "update", "starts_with", "contains", "mutate", "%>%", "everything", "one_of"))
+
+utils::globalVariables(c("newcat", ".", "%>%"))
 
 getdata.DN <- function(model){
   mclass <- getclass.DN(model)$model.class
+
+  getdata1 <- function(model, env = parent.frame(), ...) {
+    form <- try(terms(model), silent = TRUE)
+    if (inherits(form, "try-error") && is.null(model[["call"]])) {
+      stop("Dataset cannot be extracted")
+    } else  {
+      if (!is.null(model[["call"]][["data"]])) {
+        dat <- eval(model[["call"]][["data"]], env)
+        if (inherits(dat, "try-error")) {
+          dat <- get_all_vars(model, data = model[["call"]][["data"]])
+        }
+      } else {
+        dat <- get_all_vars(model, data = env)
+      }
+      # handle subset
+      if (!is.null(model[["call"]][["subset"]])) {
+        subs <- try(eval(model[["call"]][["subset"]], dat), silent = TRUE)
+        if (inherits(subs, "try-error")) {
+          subs <- try(eval(model[["call"]][["subset"]], env), silent = TRUE)
+          if (inherits(subs, "try-error")) {
+            subs <- TRUE
+            warning("Dataset may not be extracted properly")
+          }
+        }
+        dat <- dat[subs, , drop = FALSE]
+      }
+      # handle na.action
+      if (!is.null(model[["na.action"]])) {
+        dat <- dat[-model[["na.action"]], , drop = FALSE]
+      }
+    }
+    if (is.null(dat)) {
+      stop("Dataset cannot be extracted")
+    }
+    dat
+  }
 
   getdata.rms.DN <- function(model){
     model <- update(model, x=T, y=T)
@@ -19,7 +57,7 @@ getdata.DN <- function(model){
         cat.var.df <- as_tibble(model$x) %>%
           dplyr::select(starts_with(paste(cat.var.name,"=",sep=""))) %>%
           dplyr::select(-contains("*")) %>%
-          mutate(newcat=ifelse(rowSums(.)==0,1,0)) %>%
+          dplyr::mutate(newcat=ifelse(rowSums(.)==0,1,0)) %>%
           dplyr::select(newcat,everything())
         colnames(cat.var.df) <- cat.var.levels
         cat.var.dat <- names(cat.var.df[1:ncol(cat.var.df)])[max.col(cat.var.df[1:ncol(cat.var.df)])]
@@ -87,14 +125,14 @@ getdata.DN <- function(model){
   if (mclass %in% c("ols", "lrm", "Glm", "cph"))
     model <- update(model, x=T, y=T)
 
-  if (any(class(try(find_data(model), silent = TRUE)) == "try-error")){
+  if (any(class(try(getdata1(model), silent = TRUE)) == "try-error")){
     if (mclass %in% c("ols", "lrm", "Glm", "cph")){
       dat <- getdata.rms.DN(model)
     } else{
       stop("Dataset cannot be extracted")
     }
   } else{
-    dat <- find_data(model)
+    dat <- getdata1(model)
   }
   dat
 }

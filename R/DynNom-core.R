@@ -1,6 +1,5 @@
 
-utils::globalVariables(c("counter", "Prediction", "input.data", "old.d", "ggplotly",
-                         "plotlyOutput", "renderPlotly","Lower.bound", "Upper.bound"))
+utils::globalVariables(c("Prediction", "counter", "Lower.bound", "Upper.bound"))
 
 DynNom.core <- function(model, data, clevel, m.summary, covariate, DNtitle, DNxlab, DNylab, DNlimits) {
 
@@ -22,8 +21,8 @@ DynNom.core <- function(model, data, clevel, m.summary, covariate, DNtitle, DNxl
 
   allvars <- all.vars(model$terms)
   if (mclass %in% c("ols", "lrm", "Glm")){
-    terms <- model$Design$assume[model$Design$assume!="interaction"]
-    names(terms) = model$Design$name[model$Design$assume!="interaction"]
+    terms <- c("-", model$Design$assume[model$Design$assume!="interaction"])
+    names(terms) = allvars
     if (mclass %in% c("Glm")){
       terms <- c(attr(attr(model$model, "terms"), "dataClasses")[1], terms)
     } else{
@@ -48,28 +47,30 @@ DynNom.core <- function(model, data, clevel, m.summary, covariate, DNtitle, DNxl
 
   resp <- terms[1]
   names(resp) <- allvars[1]
-  if ("(weights)" %in% names(terms)){
-    preds <- as.list(terms[-c(1, length(terms))])
-  } else{
-    preds <- as.list(terms[-1])
-  }
-  names(preds) <- allvars[-1]
 
-  for (i in 1:length(preds)){
-    if (preds[[i]] == "numeric"){
-      i.dat <- which(names(preds[i]) == names(data))
+  if ("(weights)" %in% names(terms)){
+    preds0 <- as.list(terms[-c(1, length(terms))])
+  } else{
+    preds0 <- as.list(terms[-1])
+  }
+  names(preds0) <- allvars[-1]
+
+  preds <- list()
+  for (i in 1:length(preds0)){
+    if (preds0[[i]] == "numeric"){
+      i.dat <- which(names(preds0[i]) == names(data))
       preds[[i]] <- list(v.min = floor(min(na.omit(data[, as.numeric(i.dat)]))),
                          v.max = ceiling(max(na.omit(data[, as.numeric(i.dat)]))),
                          v.mean = zapsmall(mean(data[, as.numeric(i.dat)], na.rm=T), digits = 4)
       )
-      next
     }
-    if (preds[[i]] == "factor"){
-      i.dat <- which(names(preds[i]) == names(data))
+
+    if (preds0[[i]] == "factor"){
+      i.dat <- which(names(preds0[i]) == names(data))
       if (mclass %in% c("ols", "Glm", "lrm", "cph")){
-        preds[[i]] <- list(v.levels = model$Design$parms[[which(names(preds[i]) == names(model$Design$parms))]])
+        preds[[i]] <- list(v.levels = model$Design$parms[[which(names(preds0[i]) == names(model$Design$parms))]])
       } else{
-        preds[[i]] <- list(v.levels = model$xlevels[[which(names(preds[i]) == names(model$xlevels))]])
+        preds[[i]] <- list(v.levels = model$xlevels[[which(names(preds0[i]) == names(model$xlevels))]])
       }
     }
   }
@@ -94,7 +95,7 @@ DynNom.core <- function(model, data, clevel, m.summary, covariate, DNtitle, DNxl
     }
   }
 
-  neededVar <- c(names(resp), names(preds))
+  neededVar <- c(names(resp), names(preds0))
   data <- data[, neededVar]
   input.data <- data[0, ]
 
@@ -139,15 +140,15 @@ DynNom.core <- function(model, data, clevel, m.summary, covariate, DNtitle, DNxl
         slide.bars <- list()
         for (j in 1:length(preds)){
           if (terms[j+1] == "factor"){
-            slide.bars[[j]] <- list(selectInput(paste("pred", j, sep = ""), names(preds)[j], preds[[j]]$v.levels, multiple = FALSE))
+            slide.bars[[j]] <- list(selectInput(paste("pred", j, sep = ""), names(preds0)[j], preds[[j]]$v.levels, multiple = FALSE))
           }
           if (terms[j+1] == "numeric"){
             if (covariate == "slider") {
-              slide.bars[[j]] <- list(sliderInput(paste("pred", j, sep = ""), names(preds)[j],
+              slide.bars[[j]] <- list(sliderInput(paste("pred", j, sep = ""), names(preds0)[j],
                                                   min = preds[[j]]$v.min, max = preds[[j]]$v.max, value = preds[[j]]$v.mean))
             }
             if (covariate == "numeric") {
-              slide.bars[[j]] <- list(numericInput(paste("pred", j, sep = ""), names(preds)[j], value = zapsmall(preds[[j]]$v.mean, digits = 4)))
+              slide.bars[[j]] <- list(numericInput(paste("pred", j, sep = ""), names(preds0)[j], value = zapsmall(preds[[j]]$v.mean, digits = 4)))
             }
           }
         }
@@ -174,7 +175,7 @@ DynNom.core <- function(model, data, clevel, m.summary, covariate, DNtitle, DNxl
           input.v[[i]] <- isolate({
             input[[paste("pred", i, sep = "")]]
           })
-          names(input.v)[i] <- names(preds)[i]
+          names(input.v)[i] <- names(preds0)[i]
         }
         out <- data.frame(lapply(input.v, cbind))
         if (a == 0) {
@@ -197,7 +198,7 @@ DynNom.core <- function(model, data, clevel, m.summary, covariate, DNtitle, DNxl
         if (input$add > 0) {
           if (!isTRUE(compare(old.d, new.d()))) {
             isolate({
-              mpred <- getpred.DN(model, new.d())$pred
+              mpred <- suppressWarnings({ getpred.DN(model, new.d())$pred })
               se.pred <- getpred.DN(model, new.d())$SEpred
               if (is.na(se.pred)) {
                 lwb <- "No standard errors"
